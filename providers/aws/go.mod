@@ -7,8 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.15
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.100.0
 	github.com/aws/smithy-go v1.25.1
-	github.com/maqian/object-storage-client v0.0.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.0.0
+	github.com/maqian/object-storage-client v0.1.0
+	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
 )
 
 require (
@@ -72,13 +72,4 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
-
-// Local development resolves the parent and testkit modules via the workspace.
-// Until the parent ships a published tag (pkg/uos/v0.1.0) and testkit ships
-// its own (pkg/testkit/contract/v0.1.0), these replaces keep `go mod tidy`
-// runnable here without a network round-trip. Mirrors providers/minio.
-replace (
-	github.com/maqian/object-storage-client => ../..
-	github.com/maqian/object-storage-client/pkg/testkit/contract => ../../pkg/testkit/contract
 )

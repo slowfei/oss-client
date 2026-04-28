@@ -2,19 +2,9 @@ module github.com/maqian/object-storage-client/providers/upyun
 
 go 1.25.0
 
-// Local development resolves the parent and testkit modules via the workspace.
-// Until the parent ships a published tag (pkg/uos/v0.1.0) and testkit ships
-// its own (pkg/testkit/contract/v0.1.0), these replaces keep `go mod tidy`
-// runnable here without a network round-trip. Mirrors providers/aws,
-// providers/minio, providers/alibaba, providers/azure, etc.
-replace (
-	github.com/maqian/object-storage-client => ../..
-	github.com/maqian/object-storage-client/pkg/testkit/contract => ../../pkg/testkit/contract
-)
-
 require (
-	github.com/maqian/object-storage-client v0.0.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.0.0-00010101000000-000000000000
+	github.com/maqian/object-storage-client v0.1.0
+	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
 	github.com/upyun/go-sdk/v3 v3.0.4
 )
 

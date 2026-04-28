@@ -2,22 +2,12 @@ module github.com/maqian/object-storage-client/providers/azure
 
 go 1.25.0
 
-// Local development resolves the parent and testkit modules via the workspace.
-// Until the parent ships a published tag (pkg/uos/v0.1.0) and testkit ships
-// its own (pkg/testkit/contract/v0.1.0), these replaces keep `go mod tidy`
-// runnable here without a network round-trip. Mirrors providers/aws,
-// providers/minio, providers/alibaba, etc.
-replace (
-	github.com/maqian/object-storage-client => ../..
-	github.com/maqian/object-storage-client/pkg/testkit/contract => ../../pkg/testkit/contract
-)
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4
-	github.com/maqian/object-storage-client v0.0.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.0.0-00010101000000-000000000000
+	github.com/maqian/object-storage-client v0.1.0
+	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
 )
 
 require (

@@ -3,7 +3,7 @@ module github.com/maqian/object-storage-client/pkg/testkit/contract
 go 1.25.0
 
 require (
-	github.com/maqian/object-storage-client v0.0.0
+	github.com/maqian/object-storage-client v0.1.0
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
 )
@@ -60,9 +60,3 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Local development resolves the parent module via the workspace; until the
-// parent ships a published tag (pkg/uos/v0.1.0), this replace keeps `go mod
-// tidy` runnable here without a network round-trip. Remove when bumping the
-// require above to a tagged version of the parent module.
-replace github.com/maqian/object-storage-client => ../../..

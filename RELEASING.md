@@ -126,47 +126,58 @@ git push origin pkg/uos/v0.1.0
 git tag pkg/testkit/contract/v0.1.0
 git push origin pkg/testkit/contract/v0.1.0
 
-# Tag M2 provider modules (each module's replace directives for parent
-# AND testkit must be removed, and the requires bumped to the freshly-
-# tagged versions, in the same commit before tagging)
+# Tag providers — mixed v0.1.0 / v0.1.1 strategy.
+#
+# After M5 ship, a v0.1.1 patch landed (commit d936e1c) addressing 3
+# architect-flagged correctness items: (1) Azure multipart Initiate.Metadata
+# persistence, (2) cross-driver errors.As(&alreadyMapped) context augmentation
+# (touched 9 of 10 drivers), (3) Qiniu Download Mode=Token → Mode=URL.
+#
+# providers/aws was the ONLY driver untouched by the v0.1.1 patch (its
+# mapError uses a different shape with no errors.As pre-check, and it has
+# no multipart Initiate.Metadata path of its own). It tags at v0.1.0.
+# The other 9 providers carry the v0.1.1 patch and tag at v0.1.1.
+#
+# All replace directives have been removed and requires bumped to v0.1.0
+# in the release-prep commit (atomic — first tag pass, no incremental
+# per-tag commits needed). For subsequent releases (v0.2.0+), the per-tag
+# replace-cleanup-commit protocol resumes (each provider tag its own commit).
+
 git tag providers/aws/v0.1.0
 git push origin providers/aws/v0.1.0
 
-git tag providers/minio/v0.1.0
-git push origin providers/minio/v0.1.0
+git tag providers/minio/v0.1.1
+git push origin providers/minio/v0.1.1
 
-# Tag M3 provider modules (alibaba shipped first as the s3common
-# validation case; tencent/huawei/volcengine landed in parallel
-# afterwards). Same replace-cleanup-per-commit pattern as M2.
-git tag providers/alibaba/v0.1.0
-git push origin providers/alibaba/v0.1.0
+# M3 provider modules (alibaba shipped first as the s3common validation
+# case; tencent/huawei/volcengine landed in parallel afterwards).
+git tag providers/alibaba/v0.1.1
+git push origin providers/alibaba/v0.1.1
 
-git tag providers/tencent/v0.1.0
-git push origin providers/tencent/v0.1.0
+git tag providers/tencent/v0.1.1
+git push origin providers/tencent/v0.1.1
 
-git tag providers/huawei/v0.1.0
-git push origin providers/huawei/v0.1.0
+git tag providers/huawei/v0.1.1
+git push origin providers/huawei/v0.1.1
 
-git tag providers/volcengine/v0.1.0
-git push origin providers/volcengine/v0.1.0
+git tag providers/volcengine/v0.1.1
+git push origin providers/volcengine/v0.1.1
 
-# Tag M4 provider modules (the non-HMAC milestone — gcs uses
+# M4 provider modules (the non-HMAC milestone — gcs uses
 # OAuth2/Service Account/ADC, azure uses SharedKey/SAS/Entra).
-# Same replace-cleanup-per-commit pattern as M2/M3.
-git tag providers/gcs/v0.1.0
-git push origin providers/gcs/v0.1.0
+git tag providers/gcs/v0.1.1
+git push origin providers/gcs/v0.1.1
 
-git tag providers/azure/v0.1.0
-git push origin providers/azure/v0.1.0
+git tag providers/azure/v0.1.1
+git push origin providers/azure/v0.1.1
 
-# Tag M5 provider modules (the DirectGrant non-URL milestone — qiniu
-# uses Upload Token (Mode=Token), upyun uses FORM authorization
-# (Mode=Form). Same replace-cleanup-per-commit pattern as M2/M3/M4.
-git tag providers/qiniu/v0.1.0
-git push origin providers/qiniu/v0.1.0
+# M5 provider modules (the DirectGrant non-URL milestone — qiniu uses
+# Upload Token (Mode=Token), upyun uses FORM authorization (Mode=Form).
+git tag providers/qiniu/v0.1.1
+git push origin providers/qiniu/v0.1.1
 
-git tag providers/upyun/v0.1.0
-git push origin providers/upyun/v0.1.0
+git tag providers/upyun/v0.1.1
+git push origin providers/upyun/v0.1.1
 ```
 
 After tagging, verify both tags are fetchable:

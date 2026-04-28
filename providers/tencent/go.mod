@@ -3,8 +3,8 @@ module github.com/maqian/object-storage-client/providers/tencent
 go 1.25.0
 
 require (
-	github.com/maqian/object-storage-client v0.0.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.0.0-00010101000000-000000000000
+	github.com/maqian/object-storage-client v0.1.0
+	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.73
 )
 
@@ -65,14 +65,4 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
-
-// Local development resolves the parent and testkit modules via the workspace.
-// Until the parent ships a published tag (pkg/uos/v0.1.0) and testkit ships
-// its own (pkg/testkit/contract/v0.1.0), these replaces keep `go mod tidy`
-// runnable here without a network round-trip. Mirrors providers/aws +
-// providers/minio + providers/alibaba.
-replace (
-	github.com/maqian/object-storage-client => ../..
-	github.com/maqian/object-storage-client/pkg/testkit/contract => ../../pkg/testkit/contract
 )
