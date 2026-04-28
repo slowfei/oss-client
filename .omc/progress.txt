@@ -91,3 +91,90 @@ ai-slop-cleaner skill invoked, scope bounded to Ralph-changed files (no .go sour
 Post-deslop regression run (Step 7.6): all gates green again — root build/vet/fmt/test/-race/surface PASS; testkit build/vet/fmt/build-tags=docker PASS; root go.sum 0 lines; ci.yml 5 jobs parse; AGENTS.md items 2-6 mutually consistent.
 
 Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
+
+---
+
+# Ralph run #2 — Milestone M2 (AWS + MinIO drivers)
+
+## Session start
+Date: 2026-04-28
+Trigger: /ralph 实现M2 (after testkit hoist commit 8b918dd landed)
+Scope: providers/aws + providers/minio native drivers; contract suite integration; matrix update; cloud-nightly workflow; docs.
+
+## Pre-state snapshot (post-hoist)
+- Commits on main: 4 (bootstrap → freeze → M1 ship → testkit hoist).
+- Root go.mod: stdlib-only, go 1.22, go.sum 0 lines.
+- pkg/testkit/contract is its own module with testcontainers-go.
+- providers/AGENTS.md exists; no providers/<name>/ subdirectories yet.
+- docs/provider_matrix.md has aws + minio cells marked ⏳M2 (placeholders).
+- ADR Follow-up #1 still open: M2's "did transfer.Manager orchestrate AWS multipart correctly?" answer determines whether v0.2.0 needs the Architect's Uploader-interface refactor.
+
+## Stories (7)
+- US-001 (P1): providers/minio scaffold + driver — pending
+- US-002 (P2): providers/aws scaffold + driver — pending
+- US-003 (P3): providers/minio passes RunSuite via testcontainers MinIO — pending
+- US-004 (P4): providers/aws passes RunSuite via testcontainers MinIO (S3-compat) — pending
+- US-005 (P5): docs/provider_matrix.md cells updated — pending
+- US-006 (P6): .github/workflows/cloud-nightly.yml — pending
+- US-007 (P7): CHANGELOG + RELEASING + AGENTS.md A.4 + ADR Follow-up #1 answer — pending
+
+## Iteration log
+
+### Iteration 1 (2026-04-28) — US-001 + US-002 in parallel
+Spawned 2 Opus executors simultaneously for the two driver implementations (file-scoped, no overlap; shared go.work resolves cross-module imports).
+
+**providers/minio executor**: 6 files / ~1500 LOC (incl. doc comments). Uses minio-go/v7 + Core for raw multipart. Disabled internal retry (MaxRetries=1). Caught one real bug: high-level minio.Client.GetObject ignores Range options; switched to Core.GetObject which honors them. driver_test.go uses SpawnMinIO + RunSuite; one SkipCases entry for signer/issue_direct_grant_shape (Unsupported per matrix). All gates green; go.mod stayed at go 1.22.
+
+**providers/aws executor**: 6 files / ~1700 LOC. aws-sdk-go-v2 v1.41+ auto-bumped go.mod to go 1.25.0 (root pkg/uos still go 1.22; floor preserved). NopRetryer engaged. EndpointResolverV2 + UsePathStyle=true for S3-compat against SpawnMinIO. Custom contentMD5Middleware for DeleteObjects (MinIO 2024-08 still requires Content-MD5 header even when checksum-crc32 is present; AWS itself accepts the redundant header — local to DeleteMany, no surface leakage). 3 SkipCases: signer/issue_direct_grant_shape (matrix-mandated), object/put_get_special_char_key (SDK vs MinIO canonicalisation on '?' and '%FF' — real AWS handles fine), multipart/resume_after_failure (M1 suite-level skip).
+
+**ADR Follow-up #1 answered (both halves)**: NEITHER driver routes through pkg/uos/transfer.Manager. AWS uses raw s3.UploadPart; MinIO delegates to minio-go's PutObject (which handles size dispatch + parallel parts + abort internally). Reason for both: vendor SDK's multipart already encodes orchestration; wrapping transfer.Manager around it doubles the work. Recommended action for v0.2.0: ship the Architect's Uploader interface (~80 LOC additive) so the bypass becomes part of the abstraction, not per-driver workarounds.
+
+**ADR Follow-up #4 partial answer (s3common)**: M2 surfaced concrete extraction candidates from both drivers — pointer-flatten helpers, range header formatter, metadata case-folding, 1000-key delete batching, S3-compat error code table. Defer extraction to M3 (Alibaba/Tencent/etc) where one more S3-family driver will confirm the duplication.
+
+**Independent verification (lead)**: build/vet/fmt clean for all 3 modules (root, testkit, +2 new providers). Contract suite passes for both providers. TestFrozenSurface 3 subtests still pass (no Code/Capability addition). Root go.sum still 0 lines (NFR-008 holds despite 2 new providers — providers carry their own SDK sums, root is unchanged).
+
+### Iteration 2 (2026-04-28) — US-005 + US-006 + US-007
+Lead-executed (no agents needed; doc work).
+
+US-005 (matrix update): docs/provider_matrix.md rewritten. Driver status table: aws + minio = Shipped (v0.1.0). Capability matrix: aws/minio columns filled — 9 ✅, 2 🟡, 1 ❌, 1 🧩 (matches what capabilities() returns in both drivers). Two new footnotes (13: S3-family Versioning conditional on bucket setting; 14: S3-family ObjectACL conditional on Bucket Object Ownership; default since 2023 has ACLs disabled).
+
+US-006 (cloud-nightly): .github/workflows/cloud-nightly.yml created. 2 jobs (aws-nightly, minio-nightly). Skip-without-secret pattern via probe step that gates the test run. Triggered by schedule (daily 04:17 UTC, off-peak) + workflow_dispatch (manual). YAML parses.
+
+US-007 (docs): CHANGELOG.md gained [providers/aws/v0.1.0] and [providers/minio/v0.1.0] entries with full Added + Notes sections (incl. ADR Follow-up #1 answer and the go directive caveat for AWS). RELEASING.md §1 module map updated (provider rows split: aws + minio = ACTIVE, generic = PLANNED). §4 release checklist now lists provider tag commands with explicit ordering rationale (root → testkit → providers; each can pin its parent's freshly-tagged version and remove its replace directive in the same commit). §5 records both ADR Follow-up #1 (bypass + v0.2.0 Uploader recommendation) and Follow-up #4 (s3common candidates list). AGENTS.md item 4 cross-references the §5 Follow-up #4 status.
+
+Final regression (post-US-007): build/vet/fmt clean for all 3 modules. 5 root packages PASS with -race. TestFrozenSurface 3 subtests PASS. Both providers' contract suites pass. ci.yml (5 jobs) + cloud-nightly.yml (2 jobs) parse.
+
+PRD: all 7 stories `passes: true`.
+
+### Iteration 3 (2026-04-28) — Architect verification + post-architect cleanup
+Architect verdict: **APPROVED_WITH_NOTES**. All 7 stories pass with fresh evidence; frozen surface intact (TestFrozenSurface 3 subtests PASS); NFR-008 holds at module level (root go.sum=0 despite 2 new providers shipping); zero cross-provider imports; multi-module hygiene complete (replace directives present, RELEASING.md §4 documents cleanup ordering).
+
+Architect's 4 non-blocking notes:
+1. (v0.1.x doc) AWS `put_get_special_char_key` skip is real driver-level divergence; file tracking issue + consider MinIO image upgrade
+2. (v0.2.0) Ship Architect's Uploader interface (~80 LOC additive on pkg/uos) so transfer.Manager bypass becomes part of abstraction
+3. (M3 first driver) Extract pkg/uos/s3common at the FIRST M3 driver land, not after the second — 5 candidates already proven duplicated between aws + minio
+4. (v0.1.x ergonomics) Add `make tidy` for multi-module contributor ergonomics
+
+Note #4 fixed in this iteration: Makefile gained a `tidy` target that walks all 4 modules ($MODULES = root + testkit + 2 providers). Verified: `make tidy` produces zero diff (modules already in sync). Other 3 notes deferred to v0.1.x / v0.2.0 / M3.
+
+### Iteration 4 (2026-04-28) — Deslop pass (Ralph Step 7.5) + Regression (Step 7.6)
+ai-slop-cleaner skill invoked, scope bounded to Ralph M2 changed-file set. Per-category grep scan:
+- TODO/FIXME/XXX/HACK/debug: **0 hits** in providers/*.go
+- panic / fmt.Print / log.Print / println: **0 hits** (no debug leftovers, no lazy-panic error handling)
+- Commented-out code: 5 grep hits, all FALSE POSITIVES (real explanatory comments about url.Parse / multipart / retry semantics)
+- Doc-comment slop: 56 hits matching "Identifier does/is/wraps/..." — these are **required** Go convention per the brief; not slop
+- Cross-provider duplication: real, architect-acknowledged, deferred to M3 (s3common extraction; out of Ralph scope per brief)
+
+Deslop verdict: **NO slop within bounded scope** (per skill protocol's accepted "no-slop-found" outcome). Only edit made was the architect-recommended `make tidy` target, which is additive ergonomics not slop removal.
+
+Post-deslop regression (Step 7.6) — all gates green again:
+- root: build/vet/fmt silent; 5 packages PASS with -race
+- TestFrozenSurface: 3 subtests PASS
+- providers/aws: contract suite passes (`go test -tags=docker -short -count=1`)
+- providers/minio: contract suite passes
+- root go.sum: 0 lines
+- ci.yml + cloud-nightly.yml YAML parse (5 + 2 jobs respectively)
+- `make tidy` is a no-op (no go.mod/sum diffs)
+
+Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
+

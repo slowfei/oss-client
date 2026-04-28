@@ -1,0 +1,78 @@
+name: cloud-nightly
+
+# Per docs/architecture_plan.md §6.3 (Cloud nightly opt-in) and
+# docs/provider_roadmap.md M2 exit checklist:
+# - Triggered nightly (cron) plus on-demand (workflow_dispatch).
+# - Each provider's job checks for its own per-provider secret. If the
+#   secret is absent, the job exits SKIP (echo + exit 0) — never FAIL.
+# - This is the ONLY workflow that may exercise real cloud endpoints.
+# - Maintainer-gated: secrets are configured at the repo level by the
+#   project owner; forks/PRs cannot expose them.
+
+on:
+  schedule:
+    - cron: '17 4 * * *'  # daily at 04:17 UTC (off-peak; not on the hour to dodge GHA throttling)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aws-nightly:
+    name: aws-nightly (real AWS S3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Probe for AWS nightly secret
+        id: probe
+        env:
+          OMC_AWS_NIGHTLY_KEY: ${{ secrets.OMC_AWS_NIGHTLY_KEY }}
+        run: |
+          if [ -z "$OMC_AWS_NIGHTLY_KEY" ]; then
+            echo "::warning::OMC_AWS_NIGHTLY_KEY secret is not configured; skipping AWS nightly run."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run AWS contract suite against real S3
+        if: steps.probe.outputs.skip == 'false'
+        env:
+          OMC_AWS_NIGHTLY_KEY: ${{ secrets.OMC_AWS_NIGHTLY_KEY }}
+          OMC_AWS_NIGHTLY_SECRET: ${{ secrets.OMC_AWS_NIGHTLY_SECRET }}
+          OMC_AWS_NIGHTLY_BUCKET: ${{ secrets.OMC_AWS_NIGHTLY_BUCKET }}
+          OMC_AWS_NIGHTLY_REGION: ${{ secrets.OMC_AWS_NIGHTLY_REGION || 'us-east-1' }}
+        working-directory: providers/aws
+        run: go test -tags=cloud -count=1 -timeout=20m ./... -run TestCloudNightly
+
+  minio-nightly:
+    name: minio-nightly (self-hosted MinIO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Probe for MinIO endpoint env
+        id: probe
+        env:
+          OMC_MINIO_NIGHTLY_ENDPOINT: ${{ secrets.OMC_MINIO_NIGHTLY_ENDPOINT }}
+        run: |
+          if [ -z "$OMC_MINIO_NIGHTLY_ENDPOINT" ]; then
+            echo "::warning::OMC_MINIO_NIGHTLY_ENDPOINT secret is not configured; skipping MinIO nightly run."
+            echo "::warning::Self-hosted MinIO contributors can opt in by adding the secret."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run MinIO contract suite against real endpoint
+        if: steps.probe.outputs.skip == 'false'
+        env:
+          OMC_MINIO_NIGHTLY_ENDPOINT: ${{ secrets.OMC_MINIO_NIGHTLY_ENDPOINT }}
+          OMC_MINIO_NIGHTLY_KEY: ${{ secrets.OMC_MINIO_NIGHTLY_KEY }}
+          OMC_MINIO_NIGHTLY_SECRET: ${{ secrets.OMC_MINIO_NIGHTLY_SECRET }}
+          OMC_MINIO_NIGHTLY_BUCKET: ${{ secrets.OMC_MINIO_NIGHTLY_BUCKET }}
+        working-directory: providers/minio
+        run: go test -tags=cloud -count=1 -timeout=20m ./... -run TestCloudNightly

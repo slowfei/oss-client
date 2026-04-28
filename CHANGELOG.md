@@ -9,7 +9,116 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ## [Unreleased]
 
-(Nothing pending — the next entries belong here when M2 work begins.)
+(Nothing pending. Next entries belong here when M3 work begins — Alibaba / Tencent / Huawei / Volcengine native drivers per `docs/provider_roadmap.md`.)
+
+## [providers/aws/v0.1.0] — 2026-04-28 — M2 (AWS native driver)
+
+First tagged release of the AWS S3 native driver. Implements every
+`pkg/uos.Client` method against `aws-sdk-go-v2 + service/s3`. Passes
+the cross-provider contract test kit (`pkg/testkit/contract.RunSuite`)
+against a `testcontainers-go` MinIO endpoint in S3-compat mode.
+
+### Added
+
+- `providers/aws/factory.go`: `factoryImpl` registers itself on
+  `pkg/uos.DefaultRegistry` via `init()`. `Provider() = "aws"`,
+  `Validate(cfg)` requires Region, `Open(ctx, cfg)` constructs an
+  `aws.Config` with a custom `EndpointResolverV2` (when
+  `cfg.Endpoint` is set, for S3-compat targets), `aws.NopRetryer{}`
+  (deliberate — pkg/uos owns retry per `RetryPolicy`), and a
+  credentials adapter that pulls AK/SK from
+  `cfg.CredentialProvider`. Path-style addressing on opt-in via
+  `DriverConfig.PathStyle` (forced when a custom endpoint is set).
+- `providers/aws/driver.go`: `driverImpl` implements `Client` plus
+  the four sub-services (`BucketService`, `ObjectService`,
+  `MultipartService`, `Signer`). Notable choices:
+  - Multipart uses raw `s3.CreateMultipartUpload` /
+    `UploadPart` / `CompleteMultipartUpload` (does not route
+    through `pkg/uos/transfer.Manager` — see Notes below).
+  - `DeleteMany` auto-batches keys into S3's 1000-per-request cap.
+  - `Signer.SignURL` uses `s3.PresignClient`. `IssueDirectGrant`
+    returns `ErrUnsupported{Capability: CapDirectGrant}` per
+    matrix footnote 5 (S3-family uses presigned URL).
+  - `As(target)` exposes `**s3.Client` and `**s3.PresignClient`.
+- `providers/aws/error_map.go`: translates `*types.NoSuchKey`,
+  `*types.NoSuchBucket`, `*types.BucketAlreadyExists`,
+  `*types.BucketAlreadyOwnedByYou`, `*types.NotFound`, and generic
+  `smithy.APIError` codes into the 14 frozen `pkg/uos.Code`
+  values; HTTP status fallback for unmapped errors. `RequestID`
+  and `SecondaryID` populated from awsmiddleware metadata.
+- `providers/aws/capabilities.go`: returns the 13-cell
+  `capability.Report` matching the aws column of
+  `docs/provider_matrix.md` (9 ✅, 2 🟡 [Versioning, ObjectACL —
+  see footnotes 13/14], 1 ❌ [DirectGrant], 1 🧩 [NativeMove]).
+- `providers/aws/driver_test.go` (build tag `docker`): spawns
+  MinIO via `pkg/testkit/contract.SpawnMinIO`, configures the
+  AWS SDK to point at the S3-compat endpoint, runs the contract
+  suite end-to-end. 28 PASS, 17 SKIP (3 driver-level SkipCases
+  for MinIO/SDK canonicalisation drift on `?` and `%FF` keys —
+  cloud-nightly will validate against real AWS).
+
+### Notes
+
+- Bypassed `pkg/uos/transfer.Manager` in favor of raw
+  `s3.UploadPart` orchestration. See `RELEASING.md` §5
+  (ADR Follow-up #1) — this answer, plus the parallel MinIO
+  driver's identical bypass, motivates the v0.2.0 `Uploader`
+  interface refactor that the Architect originally proposed.
+- `go.mod` floor is `go 1.25.0` because `aws-sdk-go-v2 v1.41.6+`
+  transitively requires it. Root `pkg/uos` remains at `go 1.22`.
+- Real AWS smoke tests are gated by the cloud-nightly workflow
+  (`.github/workflows/cloud-nightly.yml`) which exits SKIP when
+  `OMC_AWS_NIGHTLY_KEY` / `OMC_AWS_NIGHTLY_SECRET` are absent.
+
+## [providers/minio/v0.1.0] — 2026-04-28 — M2 (MinIO native driver)
+
+First tagged release of the MinIO native driver. Implements every
+`pkg/uos.Client` method against `minio-go/v7`. Passes the
+cross-provider contract test kit against a `testcontainers-go`
+MinIO endpoint.
+
+### Added
+
+- `providers/minio/factory.go`: `factoryImpl` registers on
+  `pkg/uos.DefaultRegistry` via `init()`. `Provider() = "minio"`,
+  `Validate(cfg)` requires Endpoint + CredentialProvider,
+  `Open(ctx, cfg)` constructs a `minio.Client` with
+  `BucketLookup: BucketLookupPath` (path-style is the MinIO
+  default) and `MaxRetries: 1` (pkg/uos owns retry per
+  `RetryPolicy`).
+- `providers/minio/driver.go`: `driverImpl` implements `Client`
+  plus the four sub-services. Notable choices:
+  - `Get` uses `minio.Core.GetObject` (raw API) instead of the
+    high-level streaming reader, because the latter ignores
+    explicit `Range` options. Required for the contract suite's
+    `range_returns_slice` case.
+  - Multipart delegated to `minio.Client.PutObject` (vendor
+    handles size-based dispatch + parallel parts + abort) plus
+    `Core` for raw `Initiate/UploadPart/Complete/Abort`.
+  - `Signer.SignURL` uses `minio.PresignedGet/Put`.
+    `IssueDirectGrant` returns the same typed-Unsupported error
+    as AWS.
+  - `As(target)` exposes `**minio.Client` and `**minio.Core`.
+- `providers/minio/error_map.go`: translates `minio.ErrorResponse`
+  codes (`NoSuchKey`, `NoSuchBucket`, `BucketAlreadyOwnedByYou`,
+  `AccessDenied`, `SignatureDoesNotMatch`, `SlowDown`,
+  `RequestTimeout`, etc.) into the 14 frozen `pkg/uos.Code`
+  values. Catch-all is `ErrInternal` with `Cause` populated.
+- `providers/minio/capabilities.go`: same shape as the AWS
+  driver (S3-family).
+- `providers/minio/driver_test.go` (build tag `docker`): spawns
+  MinIO via the testkit helper, runs the contract suite. All
+  cases pass; 1 driver-level `SkipCases` entry for
+  `signer/issue_direct_grant_shape` (the capability-gating case
+  for the same path passes — proving the typed-Unsupported
+  contract).
+
+### Notes
+
+- Bypassed `pkg/uos/transfer.Manager` for the same reason as the
+  AWS driver. See ADR Follow-up #1 in `RELEASING.md` §5.
+- `go.mod` floor is `go 1.22` (matches root). `minio-go/v7` does
+  not require Go 1.25.
 
 ## [pkg/uos/v0.1.0] — 2026-04-28 — M1 (Core Skeleton)
 

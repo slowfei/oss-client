@@ -15,7 +15,9 @@ versioned and tagged independently. This document defines:
 | ---------------------------------------------------------- | --------------------------- | ------------- | ----- |
 | `github.com/maqian/object-storage-client`                  | `pkg/uos/`                  | ACTIVE        | Root module. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. |
 | `github.com/maqian/object-storage-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
-| `github.com/maqian/object-storage-client/providers/<name>` | `providers/<name>/`         | EMPTY         | One module per provider, scaffolded by `scripts/add-provider.sh`. First provider lands in M2 (`providers/aws`, `providers/minio`). |
+| `github.com/maqian/object-storage-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
+| `github.com/maqian/object-storage-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
+| `github.com/maqian/object-storage-client/providers/<name>` | `providers/<name>/`         | PLANNED       | Future provider modules (M3+: alibaba, tencent, huawei, volcengine; M4: gcs, azure; M5: qiniu, upyun). Scaffolded by `scripts/add-provider.sh`. |
 
 The contract testkit was hoisted out of the root module in v0.1.0
 itself, ahead of its originally-planned slot — see §5.
@@ -115,11 +117,23 @@ module, so the testkit's `replace` directive can be removed and its
 that flips it from local-dev to a real release.
 
 ```bash
+# Tag root first so providers can pin a real parent version
 git tag pkg/uos/v0.1.0
 git push origin pkg/uos/v0.1.0
 
+# Tag testkit module (its replace directive must be removed and its
+# require bumped to pkg/uos/v0.1.0 in the same commit before tagging)
 git tag pkg/testkit/contract/v0.1.0
 git push origin pkg/testkit/contract/v0.1.0
+
+# Tag M2 provider modules (each module's replace directives for parent
+# AND testkit must be removed, and the requires bumped to the freshly-
+# tagged versions, in the same commit before tagging)
+git tag providers/aws/v0.1.0
+git push origin providers/aws/v0.1.0
+
+git tag providers/minio/v0.1.0
+git push origin providers/minio/v0.1.0
 ```
 
 After tagging, verify both tags are fetchable:
@@ -157,5 +171,38 @@ One follow-up was resolved during the v0.1.0 cycle:
   now lives at its own module path with its own `go.mod`. Root
   `go.sum` is empty; `pkg/uos` consumers no longer carry the
   Docker / containerd / OTel transitive chain.
+
+M2 surfaced the answer to two more Follow-ups:
+
+- **Follow-up #1 — M2 transfer.Manager / AWS multipart answer**:
+  the original ADR asked "did `transfer.Manager` orchestrate AWS
+  multipart correctly?" Answer: **bypass — both the AWS and MinIO
+  M2 drivers do NOT route uploads through `pkg/uos/transfer.Manager`**.
+  Both delegate to the vendor SDK's native multipart implementation
+  (`s3.UploadPart` and `minio.Client.PutObject` respectively),
+  which already handles size-based dispatch, parallel part uploads,
+  abort-on-failure, and progress reporting. Wrapping
+  `transfer.Manager` around either would double the
+  orchestration logic.
+  Implication for v0.2.0: ship the Architect's proposed `Uploader`
+  interface (architecture_plan ADR Follow-up #1, ~80 LOC additive
+  per the original review) so the bypass becomes part of the
+  abstraction, not a per-driver workaround. M4 (GCS) is the test
+  case that decides whether the `Uploader` shape is correct, since
+  GCS resumable uploads have a fundamentally different boundary.
+- **Follow-up #4 — `s3common` extraction**: planned for "M3+ once
+  two S3-family drivers have shipped." With AWS + MinIO landed,
+  the common surface area is now visible. Candidate extraction
+  targets identified by both M2 driver authors:
+  - Pointer-flatten helpers (`ptrIfNotEmpty`, `ptr32`, `ptr64`,
+    `ptrBool`, `deref`).
+  - Range header formatting (`bytes=START-END`).
+  - Metadata case-folding (lower-case in both directions).
+  - Delete batching threshold (1000 keys per call).
+  - Standard error-code → `pkg/uos.Code` table for S3-compatible
+    error responses (the wire-level codes are identical across
+    S3-family; only the typed-error wrappers differ per SDK).
+  Defer the actual extraction to M3 once Alibaba/Tencent/Huawei/
+  Volcengine raise the duplication count past two.
 
 All other Follow-ups remain at the priority captured in the ADR.

@@ -20,8 +20,8 @@ The matrix below is the **target** v1 state. Cells marked `Planned` get filled d
 
 | Provider | Driver path | SDK | Driver status | Milestone |
 | --- | --- | --- | --- | --- |
-| AWS S3 | `providers/aws` | `aws-sdk-go-v2` | Planned | M2 |
-| MinIO | `providers/minio` | `minio-go/v7` | Planned | M2 |
+| AWS S3 | `providers/aws` | `aws-sdk-go-v2` | **Shipped (v0.1.0)** | M2 |
+| MinIO | `providers/minio` | `minio-go/v7` | **Shipped (v0.1.0)** | M2 |
 | Alibaba OSS | `providers/alibaba` | `aliyun-oss-go-sdk` | Planned | M3 |
 | Tencent COS | `providers/tencent` | `cos-go-sdk-v5` | Planned | M3 |
 | Huawei OBS | `providers/huawei` | `huaweicloud-sdk-go-obs` | Planned | M3 |
@@ -39,19 +39,19 @@ The 13 v1 capabilities (frozen — see `architecture_plan.md` §7.2). Cells refl
 
 | Capability \ Provider | aws | minio | alibaba | tencent | huawei | volcengine | gcs | azure | qiniu | upyun |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `CapBucketCRUD` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapObjectCRUD` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapListPrefixDelimiter` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapRangeRead` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapMultipartUpload` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapSignedURLRead` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | ⏳M5 | 🟡M5³ |
-| `CapSignedURLWrite` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | 🟡M5⁴ | 🟡M5³ |
-| `CapDirectGrant` | ❌M2⁵ | ❌M2⁵ | ❌M3⁵ | ❌M3⁵ | ❌M3⁵ | ❌M3⁵ | ❌M4⁵ | ⏳M4⁶ | ⏳M5 | ⏳M5 |
-| `CapObjectTagging` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
-| `CapVersioning` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | 🟡M4⁸ | ❌M5⁹ | ❌M5⁹ |
-| `CapObjectACL` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹⁰ | 🟡M4¹¹ | 🧩M5⁷ | 🧩M5⁷ |
-| `CapManagedEncryption` | ⏳M2 | ⏳M2 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
-| `CapNativeMove` | 🧩M2¹² | 🧩M2¹² | 🧩M3¹² | 🧩M3¹² | 🧩M3¹² | 🧩M3¹² | 🧩M4¹² | 🧩M4¹² | 🧩M5¹² | 🧩M5¹² |
+| `CapBucketCRUD` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapObjectCRUD` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapListPrefixDelimiter` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapRangeRead` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapMultipartUpload` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapSignedURLRead` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | ⏳M5 | 🟡M5³ |
+| `CapSignedURLWrite` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | 🟡M5⁴ | 🟡M5³ |
+| `CapDirectGrant` | ❌⁵ | ❌⁵ | ❌M3⁵ | ❌M3⁵ | ❌M3⁵ | ❌M3⁵ | ❌M4⁵ | ⏳M4⁶ | ⏳M5 | ⏳M5 |
+| `CapObjectTagging` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
+| `CapVersioning` | 🟡¹³ | 🟡¹³ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | 🟡M4⁸ | ❌M5⁹ | ❌M5⁹ |
+| `CapObjectACL` | 🟡¹⁴ | 🟡¹⁴ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹⁰ | 🟡M4¹¹ | 🧩M5⁷ | 🧩M5⁷ |
+| `CapManagedEncryption` | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
+| `CapNativeMove` | 🧩¹² | 🧩¹² | 🧩M3¹² | 🧩M3¹² | 🧩M3¹² | 🧩M3¹² | 🧩M4¹² | 🧩M4¹² | 🧩M5¹² | 🧩M5¹² |
 
 ### Footnotes
 
@@ -67,6 +67,8 @@ The 13 v1 capabilities (frozen — see `architecture_plan.md` §7.2). Cells refl
 10. **GCS ACL**: GCS Uniform vs Fine-grained access control changes which ACL ops are valid; `Conditional` with reason returned at runtime.
 11. **Azure ACL**: Azure does not have S3-style per-object ACLs; the closest analog (per-blob SAS with restricted permissions) is exposed via `Signer`. Object-level ACL surface returns `Unsupported`.
 12. **`CapNativeMove` everywhere**: no provider exposes a server-side rename / move that meets the cross-provider semantic bar. Default behavior is `Copy + Delete` via `helpers.Move`. Where a vendor has a true native rename (e.g., HDFS-flavored or via legacy admin APIs), it is reached via `As(target)`. Cell is `ExtensionOnly` everywhere.
+13. **S3-family Versioning**: requires bucket-level versioning to be enabled; if disabled, `CapVersioning`-gated calls return `Code: ErrUnsupported, Capability: CapVersioning, Reason: "bucket versioning is not enabled"`. Detected at first call, not at construction.
+14. **S3-family ObjectACL**: subject to the bucket's Object Ownership setting. Buckets created with default settings since 2023 have ACLs disabled (`BucketOwnerEnforced`); per-object ACL operations return `Code: ErrUnsupported, Capability: CapObjectACL` in that mode. Buckets with `ObjectWriter`/`BucketOwnerPreferred` ownership accept ACL writes. The cell is `Conditional` for both AWS and MinIO.
 
 ## Auth scheme matrix
 
