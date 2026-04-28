@@ -83,15 +83,18 @@ func TestRunSuite(t *testing.T) {
 			// expects a grant body, which AWS will never emit.
 			"TestRunSuite/signer/issue_direct_grant_shape": "AWS S3 uses presigned URLs; CapDirectGrant=Unsupported per matrix footnote 5",
 
-			// Special-char key with '?' and '%FF' triggers a SigV4 vs
-			// MinIO canonicalisation mismatch on the wire (verified to
-			// fail with the raw aws-sdk-go-v2 against this MinIO image:
-			// the SDK signs the un-encoded form while MinIO canonicalises
-			// the encoded form). The driver itself passes the key
-			// opaquely; the bug lives between aws-sdk-go-v2 SigV4 and
-			// older MinIO releases. Cloud-nightly against real AWS
-			// validates the key shape end-to-end.
-			"TestRunSuite/object/put_get_special_char_key": "aws-sdk-go-v2 + MinIO 2024-08 disagree on '?'/%FF canonicalisation; verified against real AWS in cloud nightly",
+			// Special-char key with '?' and '%FF' triggers a permanent SigV4
+			// vs MinIO canonicalisation mismatch on the wire — verified to
+			// fail with both `minio/minio:RELEASE.2024-08-29T01-40-52Z` AND
+			// `minio/minio:latest` (HTTP 403 SignatureDoesNotMatch). The
+			// driver itself is correct: providers/minio passes the same
+			// case against the same MinIO image, proving the key is round-
+			// tripped opaquely. The mismatch is between how aws-sdk-go-v2
+			// SigV4 signs and how MinIO's URL re-canonicalisation expects
+			// to verify. Real AWS S3 handles the key correctly; cloud-
+			// nightly (.github/workflows/cloud-nightly.yml) validates the
+			// key shape end-to-end against a live AWS bucket.
+			"TestRunSuite/object/put_get_special_char_key": "permanent skip: aws-sdk-go-v2 + any MinIO release tested disagree on '?'/'%FF' canonicalisation; real AWS works (cloud-nightly validates)",
 
 			// Multipart resume requires a persisted StateStore + driver
 			// wiring; the M1 contract suite already t.Skips this case,

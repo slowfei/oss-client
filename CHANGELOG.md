@@ -180,6 +180,16 @@ M2 (AWS + MinIO) is unblocked from day one.
 - **Frozen surface fence**: `pkg/uos/surface_test.go` /
   `TestFrozenSurface` — three subtests literal-pin the 14 Codes,
   13 Capabilities, and 4 DirectGrantModes (Critic R1 binding).
+- **`Uploader` and `Downloader` interfaces** (pre-tag fold-in
+  resolving ADR Follow-up #1): structural one-method interfaces
+  in `pkg/uos/uploader.go`. `ObjectService` satisfies both
+  implicitly via `Put` / `Get`; the providers/aws and providers/minio
+  drivers needed zero code change. Compile-time `var _` assertions
+  in `uploader.go` itself catch any future drift in `ObjectService`'s
+  `Put`/`Get` signatures. Lets callers depend on upload-only or
+  download-only semantics, and lets future drivers (M4 GCS, M5 Upyun)
+  satisfy `Uploader` via a `transfer.Manager`-backed wrapper without
+  forcing the full `ObjectService` surface.
 - **CI**: `.github/workflows/ci.yml` declares five jobs:
   - `unit-root` — matrix `ubuntu-latest`/`macos-latest` × Go `1.22`/`1.23`
     against the root module.

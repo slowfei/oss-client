@@ -174,9 +174,9 @@ One follow-up was resolved during the v0.1.0 cycle:
 
 M2 surfaced the answer to two more Follow-ups:
 
-- **Follow-up #1 — M2 transfer.Manager / AWS multipart answer**:
+- **Follow-up #1 — M2 transfer.Manager / AWS multipart answer — RESOLVED in v0.1.0 pre-tag**:
   the original ADR asked "did `transfer.Manager` orchestrate AWS
-  multipart correctly?" Answer: **bypass — both the AWS and MinIO
+  multipart correctly?" Answer (recorded during M2): **bypass — both the AWS and MinIO
   M2 drivers do NOT route uploads through `pkg/uos/transfer.Manager`**.
   Both delegate to the vendor SDK's native multipart implementation
   (`s3.UploadPart` and `minio.Client.PutObject` respectively),
@@ -184,12 +184,18 @@ M2 surfaced the answer to two more Follow-ups:
   abort-on-failure, and progress reporting. Wrapping
   `transfer.Manager` around either would double the
   orchestration logic.
-  Implication for v0.2.0: ship the Architect's proposed `Uploader`
-  interface (architecture_plan ADR Follow-up #1, ~80 LOC additive
-  per the original review) so the bypass becomes part of the
-  abstraction, not a per-driver workaround. M4 (GCS) is the test
-  case that decides whether the `Uploader` shape is correct, since
-  GCS resumable uploads have a fundamentally different boundary.
+  **Resolution (2026-04-28, pre-tag)**: shipped the Architect's
+  proposed `Uploader` interface (and a symmetric `Downloader`)
+  inside `pkg/uos/uploader.go` — see `architecture_plan.md` §1.1
+  rows 12 and 13 / `CHANGELOG.md` `[pkg/uos/v0.1.0]` entry.
+  Both interfaces are structural one-method interfaces satisfied
+  implicitly by the existing `ObjectService`; both M2 drivers
+  (`providers/aws`, `providers/minio`) needed zero code change.
+  The bypass is now first-class via `ObjectService.Put`-as-Uploader;
+  M4 (GCS) and M5 (Upyun) drivers will be free to satisfy
+  `Uploader` via a `transfer.Manager`-backed wrapper in their own
+  provider package without contorting their request shapes into the
+  unified `MultipartService` API.
 - **Follow-up #4 — `s3common` extraction**: planned for "M3+ once
   two S3-family drivers have shipped." With AWS + MinIO landed,
   the common surface area is now visible. Candidate extraction

@@ -27,6 +27,13 @@
 // per-module release protocol in RELEASING.md and the binding
 // rationale in docs/architecture_plan.md §7 for the full rules.
 //
+// Two structural one-method interfaces — Uploader and Downloader (see
+// uploader.go) — are NOT in the three frozen sets. They are satisfied
+// implicitly by ObjectService and exist so callers can depend on
+// upload-only or download-only semantics without coupling to the full
+// ObjectService surface. Compile-time `var _` assertions in uploader.go
+// catch any future Put/Get signature drift.
+//
 // # Layout
 //
 // pkg/uos is the root of a small package family, each piece self-contained:
@@ -54,6 +61,8 @@
 //	if err != nil { /* handle */ }
 //	defer cli.Close()
 //
-// No provider drivers exist yet at v0.1; the import above is the
-// expected M2+ shape and is documented here for forward reference only.
+// Drivers shipped as of M2: providers/aws (aws-sdk-go-v2) and
+// providers/minio (minio-go/v7). M3+ adds the国云 family (Alibaba /
+// Tencent / Huawei / Volcengine). See CHANGELOG.md for per-module
+// release entries.
 package uos

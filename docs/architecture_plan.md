@@ -18,7 +18,9 @@
 
 ## 1. Core Abstractions (frozen)
 
-The following 11 entities form the v1 public surface. Drivers MAY NOT introduce new top-level entities visible from `pkg/uos`. Vendor-specific richness escapes via `As(target any) bool` only.
+The following 13 entities form the v1 public surface. Drivers MAY NOT introduce new top-level entities visible from `pkg/uos`. Vendor-specific richness escapes via `As(target any) bool` only.
+
+> **Pre-tag amendment (2026-04-28)**: entities 12-13 (`Uploader`, `Downloader`) were added before tagging `pkg/uos/v0.1.0` to resolve ADR Follow-up #1 — see entity inventory row below and `RELEASING.md` §5.
 
 ### 1.1 Entity inventory
 
@@ -35,6 +37,7 @@ The following 11 entities form the v1 public surface. Drivers MAY NOT introduce 
 | `transfer.Manager`, `transfer.Config`, `transfer.StateStore` | `pkg/uos/transfer` | Multipart/resume orchestration. |
 | `DirectGrant`, `SignedURL`, `SignURLRequest`, `DirectGrantRequest` | `pkg/uos` | Unified URL- and non-URL-based time-bounded grants (Azure SAS, Qiniu Token, Upyun FORM all map here). |
 | `ObjectInfo`, `BucketInfo`, `ObjectReader`, `Checksum`, `Metadata`, `ContentHeaders`, request/response structs | `pkg/uos` | Request/response value types per PRD §4.4. |
+| `Uploader`, `Downloader` | `pkg/uos` | Structural one-method interfaces (`Put` / `Get`); `ObjectService` satisfies both implicitly. Pre-tag fold-in resolving ADR Follow-up #1; lets drivers (and future `transfer.Manager`-backed wrappers) be substituted at the upload-only / download-only boundary without coupling callers to the full `ObjectService` surface. |
 
 ### 1.2 Top-level interface signatures (binding)
 
@@ -69,7 +72,9 @@ Sub-service signatures (`BucketService`, `ObjectService`, `MultipartService`, `S
 
 ### 1.3 Stability ontology
 
-The 11 entities converged at Round 1 of the interview and showed zero drift across the remaining 4 rounds (stability ratio = 100%). Adding a 12th entity to the public surface in v1.x requires:
+The original 11 entities converged at Round 1 of the interview and showed zero drift across the remaining 4 rounds (stability ratio = 100%). Two more (`Uploader`, `Downloader`) were folded in pre-tag on 2026-04-28 per ADR Follow-up #1 — both are structural interfaces satisfied implicitly by the existing `ObjectService`, so the addition is non-breaking for any code that already compiles against v0.1.0-pre-tag.
+
+Adding a 14th entity to the public surface in v1.x requires:
 
 1. Justification by ≥ 2 independent providers OR by an unambiguous PRD section, AND
 2. A minor version bump on `pkg/uos`.

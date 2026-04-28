@@ -4,3 +4,6 @@
 .omc/sessions/
 .omc/project-memory.json
 .omc/notepad.md
+
+# Local Claude Code session state.
+.claude/
