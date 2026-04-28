@@ -35,7 +35,7 @@ mkdir -p "${DIR}"
 cat > "${DIR}/go.mod" <<EOF
 module ${PROVIDER_MODULE}
 
-go 1.25
+go 1.22
 
 require ${ROOT_MODULE} v0.0.0
 EOF

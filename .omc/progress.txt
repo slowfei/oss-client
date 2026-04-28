@@ -1,0 +1,93 @@
+# Ralph progress — testkit hoist (ADR Follow-up #3 promotion)
+
+## Session start
+Date: 2026-04-28
+Trigger: /ralph "按照计划依次执行" (execute the plan in order)
+Scope decision: testkit hoist only (item 2 of the post-M1 actionable list).
+  - Item 1 (tag pkg/uos/v0.1.0) is maintainer-gated — not in scope for this Ralph.
+  - Item 3 (M2 timing) and item 4 (v0.1.x patch strategy) require user decisions — not in scope.
+
+## Pre-state snapshot (before any US executes)
+Root go.mod: module `github.com/maqian/object-storage-client`, `go 1.25.0`, ~58 require directives (~50 indirect from testcontainers transitive chain).
+go.work: `go 1.25.0`, `use ./` only.
+.github/workflows/ci.yml: matrix `os=[ubuntu-latest,macos-latest] go=['1.25']`; vet-fmt/unit-docker/surface jobs all on 1.25.
+AGENTS.md Appendix A item 6: testkit hoist promoted to v0.2.0 mandatory (status = pending).
+RELEASING.md §5 Follow-up #3: same.
+pkg/testkit/contract/ contents: 9 files (suite.go, 6 cases_*.go, minio.go //go:build docker, minio_test.go //go:build docker) — all live in root module.
+Worker-3's minio.go API surface: tcminio.Run / WithUsername / WithPassword / c.ConnectionString / testcontainers.TerminateContainer (the last is post-v0.34.x API).
+
+## Stories
+US-001 (P1): Hoist testkit module + go.work + scripts — pending
+US-002 (P2): Restore root go directive lower if possible — pending
+US-003 (P3): Hoisted module builds + docker-tagged tests — pending
+US-004 (P4): CI workflow multi-module update — pending
+US-005 (P5): Docs (CHANGELOG, RELEASING, AGENTS.md A.6) — pending
+
+## Iteration log
+
+### Iteration 1 (2026-04-28)
+US-001 + US-002 + US-003 done in one batch (their work overlaps and was verifiable in a single round-trip):
+
+Hoist mechanics:
+- `cd pkg/testkit/contract && go mod init github.com/maqian/object-storage-client/pkg/testkit/contract`
+- `go work use ./pkg/testkit/contract` (from root)
+- Wrote `pkg/testkit/contract/go.mod` with `go 1.25`, requires for `github.com/maqian/object-storage-client v0.0.0` + `testcontainers-go` v0.42.0 + `testcontainers-go/modules/minio` v0.42.0, plus a `replace github.com/maqian/object-storage-client => ../../..` directive (works alongside go.work; documented for removal at parent-tag time).
+- `cd pkg/testkit/contract && go mod tidy` populated 50+ indirects (the testcontainers/Docker/moby/OTel chain) and bumped testkit's go directive to `1.25.0`.
+- `go mod tidy` from root dropped EVERY require — root is now stdlib-only. `go.sum` is 0 lines.
+
+Root reverts:
+- Root `go.mod` go directive: `1.25.0` → `1.22` (matches PRD acceptance / original M1 plan).
+- `go.work` go directive: `1.26.2` → `1.25.0` (must satisfy testkit's `1.25.0` minimum; `1.25` was misread by Go as < 1.25.0).
+- `scripts/add-provider.sh`: `go 1.25` → `go 1.22` so future scaffolded providers track root.
+
+Verification after hoist:
+- root: `go build/vet/gofmt -l .` all silent; `go test -short -race -count=1 ./...` 5 packages PASS; `TestFrozenSurface` 3 subtests pass.
+- testkit: `go build`, `go build -tags=docker`, `go vet`, `gofmt -l .` all silent.
+- root `go.sum` line count: 0 (NFR-008 fully satisfied at module level for the first time).
+
+Lessons:
+- `go mod init` writes the LOCAL toolchain version into go.mod's go directive; explicit override needed when toolchain != intended floor.
+- `go.work` go directive `1.25` is interpreted as < `1.25.0` by Go's version comparator; always use the patch-suffixed form when you want to match minimum.
+- The `replace` directive in testkit is necessary for `go mod tidy` because tidy doesn't consult go.work for module resolution (only `go build`/`go test` honor go.work for package lookup).
+- `go mod tidy` includes deps for ALL build configs (since 1.17), so testcontainers correctly landed in testkit's go.mod even though it's only imported under `//go:build docker`.
+
+### Iteration 2 (2026-04-28)
+US-004 (CI restructure) + US-005 (docs) done.
+
+US-004 — ci.yml restructured into 5 jobs:
+- `unit-root` (matrix os × go 1.22/1.23): root tests, restored to original M1 plan matrix.
+- `unit-testkit` (matrix os × go 1.25, working-directory pkg/testkit/contract): testkit tests at its required floor.
+- `vet-fmt` (single job, runs vet + gofmt for both modules via working-directory steps).
+- `unit-docker` (working-directory pkg/testkit/contract, -tags=docker): live MinIO contract suite.
+- `surface` (Go 1.22): TestFrozenSurface tripwire.
+YAML parses; 4 working-directory directives (one per testkit step).
+
+US-005 — docs:
+- CHANGELOG.md: cleared [Unreleased] (no pending work); rewrote v0.1.0 entry to reflect Go 1.22 root + testkit hoist + 5-job CI; ADR Follow-up #3 explicitly noted as resolved pre-tag in Notes.
+- RELEASING.md: §1 module map now shows 2 ACTIVE rows (root + testkit); §2 tag scheme adds pkg/testkit/contract/vX.Y.Z; §4 release checklist covers BOTH modules with explicit tag-order (root first, then testkit) + post-tag replace-directive cleanup; §5 Follow-up #3 marked resolved-in-v0.1.0.
+- AGENTS.md item 6 marked DONE; explains hoist mechanics + post-tag replace-directive cleanup pointer.
+
+Final regression after all 5 stories:
+- ROOT: build/vet/gofmt silent; go test -short -race ./... → 5 packages PASS; TestFrozenSurface 3 subtests pass; go.sum = 0 lines.
+- TESTKIT: build (default + docker), vet, gofmt all silent.
+- ci.yml YAML parses with 5 expected jobs.
+
+PRD: all 5 stories `passes: true`.
+
+### Iteration 3 (2026-04-28) — Architect verification (Ralph Step 7) + post-architect cleanup
+Architect verdict: **APPROVED_WITH_NOTES**. All 5 stories pass with fresh evidence; architecture sound; NFR-008 satisfied at module level for the first time; Critic R1 frozen surface still pinned post-hoist.
+
+Architect's strongest non-blocking note: AGENTS.md items 2/3/5 still described pre-hoist state (Go 1.25.0 root, script writes go 1.25, CI 4 jobs) and contradicted the freshly-updated item 6. Fixed in 3 surgical edits before deslop pass — items 2/3/5/6 now mutually consistent.
+
+Other architect notes (rolled to v0.2.0+ follow-ups; not in this Ralph scope):
+- (a) `unit-testkit` matrix could be ubuntu-only (testkit is test-helper code; macOS coverage is marginal)
+- (b) `.omc/plans/v0.1-implementation-plan.md` line 854 still says "kept inside the root for v0.1 simplicity; revisit at M6" — historically accurate but stale; could carry an addendum
+- (c) Add a `make tidy` target that runs `go mod tidy` from both module dirs to formalize multi-module contributor ergonomics
+- (d) AGENTS.md item 6 has no commit SHA yet (acceptance-criterion permitted "filled at commit time"); fill at commit
+
+### Iteration 4 (2026-04-28) — Deslop (Ralph Step 7.5) + Regression (Ralph Step 7.6)
+ai-slop-cleaner skill invoked, scope bounded to Ralph-changed files (no .go source touched in this run). Slop-classification scan: no Duplication, Dead code, Needless abstraction, Boundary violations, or Missing tests applicable. Skill explicitly accepts "no slop to remove" as expected outcome.
+
+Post-deslop regression run (Step 7.6): all gates green again — root build/vet/fmt/test/-race/surface PASS; testkit build/vet/fmt/build-tags=docker PASS; root go.sum 0 lines; ci.yml 5 jobs parse; AGENTS.md items 2-6 mutually consistent.
+
+Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.

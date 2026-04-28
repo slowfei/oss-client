@@ -1,0 +1,82 @@
+{
+  "task": "Hoist pkg/testkit/contract into its own Go module so root go.mod / go.sum drop testcontainers and the Go toolchain floor. Resolves ADR Follow-up #3 (promoted M6 → v0.2.0 mandatory) before M2 starts.",
+  "scope_note": "This Ralph run is intentionally scoped to the hoist only. M2 (AWS + MinIO drivers per provider_roadmap.md) is the next session's work; tag pkg/uos/v0.1.0 is a maintainer action per RELEASING.md §4. Do not auto-tag.",
+  "session_started": "2026-04-28",
+  "all_stories_complete": true,
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Hoist pkg/testkit/contract into a separate Go module + wire go.work + scripts",
+      "priority": 1,
+      "passes": true,
+      "evidence": "pkg/testkit/contract/go.mod exists with module path github.com/maqian/object-storage-client/pkg/testkit/contract; requires testcontainers-go v0.42.0 and modules/minio v0.42.0 directly; requires github.com/maqian/object-storage-client v0.0.0 with `replace .. => ../../..`. go.work lists both ./ and ./pkg/testkit/contract. Root go.sum is 0 lines (no testcontainers/Docker/moby/OTel/containerd entries). scripts/add-provider.sh writes go 1.22 (matching new root floor).",
+      "acceptanceCriteria": [
+        "pkg/testkit/contract/go.mod exists with module path `github.com/maqian/object-storage-client/pkg/testkit/contract`.",
+        "pkg/testkit/contract/go.mod requires `github.com/testcontainers/testcontainers-go` and `github.com/testcontainers/testcontainers-go/modules/minio` directly (versions equivalent to what root currently uses).",
+        "pkg/testkit/contract/go.mod requires `github.com/maqian/object-storage-client` as the parent (versioned `v0.0.0` until tagged); resolved locally via go.work during dev.",
+        "Root go.work lists BOTH `./` and `./pkg/testkit/contract`.",
+        "Root go.mod no longer requires `github.com/testcontainers/...` (direct or indirect); `grep -E '(testcontainers|docker/docker|moby|opentelemetry|containerd|stretchr/testify)' go.sum` returns empty (or only entries unrelated to testcontainers chain).",
+        "scripts/add-provider.sh writes the same go directive into scaffolded provider go.mod as the new root go directive (see US-002)."
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Restore root go directive to lower version after testcontainers removed",
+      "priority": 2,
+      "passes": true,
+      "evidence": "Root go.mod go directive set to `go 1.22` (PRD acceptance value). go build / go vet / gofmt -l . all silent. go test -short -race -count=1 ./... passes 5 packages (pkg/uos, pkg/uos/credential, pkg/uos/middleware, pkg/uos/httpx, pkg/uos/transfer; capability has no test files which is expected for leaf vocabulary). TestFrozenSurface 3 subtests pass.",
+      "acceptanceCriteria": [
+        "Root go.mod `go` directive is `1.22` (the originally planned floor) OR a documented-and-justified higher value if a non-testcontainers stdlib feature requires it.",
+        "From root: `go build ./...` exits 0.",
+        "From root: `go vet ./...` exits 0.",
+        "From root: `gofmt -l .` prints nothing.",
+        "From root: `go test -short -race -count=1 ./...` exits 0 with all packages PASS (testkit no longer in root, so 5 packages: pkg/uos, pkg/uos/credential, pkg/uos/middleware, pkg/uos/httpx, pkg/uos/transfer).",
+        "From root: `go test ./pkg/uos -run TestFrozenSurface -count=1 -v` shows 3 subtests pass.",
+        "If go directive could not be lowered to 1.22, the reason is recorded in CHANGELOG.md notes and AGENTS.md Appendix A item 6."
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Hoisted testkit module builds + docker-tagged tests still work",
+      "priority": 3,
+      "passes": true,
+      "evidence": "From pkg/testkit/contract/: `go build ./...`, `go vet ./...`, `gofmt -l .`, `go build -tags=docker ./...` all silent. testcontainers-go API surface used by minio.go (Run/WithUsername/WithPassword/ConnectionString/TerminateContainer) all still compile against v0.42.0 in the hoisted module.",
+      "acceptanceCriteria": [
+        "From `pkg/testkit/contract/`: `go build ./...` exits 0.",
+        "From `pkg/testkit/contract/`: `go vet ./...` exits 0.",
+        "From `pkg/testkit/contract/`: `gofmt -l .` prints nothing.",
+        "From `pkg/testkit/contract/`: `go build -tags=docker ./...` exits 0 (testcontainers-go API still satisfied).",
+        "Default `go test` from testkit module behaves identically to before the hoist (no docker-tagged tests run; minio.go excluded).",
+        "Worker-3's minio.go API usages (`tcminio.Run`, `WithUsername`, `WithPassword`, `c.ConnectionString`, `testcontainers.TerminateContainer`) all still compile."
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "CI workflow updated for multi-module layout (root + testkit)",
+      "priority": 4,
+      "passes": true,
+      "evidence": "ci.yml restructured into 5 jobs: unit-root (matrix 1.22/1.23 × Linux/macOS), unit-testkit (Go 1.25 × Linux/macOS, working-directory pkg/testkit/contract), vet-fmt (covers both modules), unit-docker (working-directory pkg/testkit/contract with -tags=docker), surface (Go 1.22 TestFrozenSurface). YAML parses; 4 working-directory directives.",
+      "acceptanceCriteria": [
+        ".github/workflows/ci.yml `unit` job runs tests from BOTH root module and pkg/testkit/contract module (e.g., explicit `working-directory:` per step OR a list of module paths).",
+        ".github/workflows/ci.yml `vet-fmt` job covers BOTH modules (separate steps per module if needed).",
+        ".github/workflows/ci.yml `unit-docker` job runs from `pkg/testkit/contract/` (the new home of minio.go).",
+        ".github/workflows/ci.yml matrix go-version reverts to `['1.22', '1.23']` if US-002 successfully lowered the root go directive; OR documented why it stays at 1.25.",
+        "ci.yml YAML parses successfully via `python3 -c 'import yaml; yaml.safe_load(open(...))'`."
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Documentation: CHANGELOG, RELEASING, AGENTS.md A.6, ADR Follow-up #3 marked DONE",
+      "priority": 5,
+      "passes": true,
+      "evidence": "CHANGELOG.md: [Unreleased] section present and clean; v0.1.0 entry rewritten to reflect Go 1.22 root + testkit hoist; ADR Follow-up #3 explicitly noted as resolved pre-tag in Notes. RELEASING.md: §1 module map shows 2 ACTIVE modules (root + testkit); §2 tag scheme adds pkg/testkit/contract/vX.Y.Z; §4 release checklist now covers both modules with explicit tag-order guidance and post-tag replace-directive cleanup; §5 Follow-up #3 marked resolved-in-v0.1.0. AGENTS.md item 6 marked DONE with details about the hoist and the post-tag replace-directive cleanup.",
+      "acceptanceCriteria": [
+        "CHANGELOG.md `[Unreleased]` section records: testkit hoist, go directive change (whatever it ended up being), CI matrix change.",
+        "RELEASING.md §1 (module map) lists the new `pkg/testkit/contract` module with its own tag scheme `pkg/testkit/contract/vX.Y.Z`.",
+        "RELEASING.md §5 ADR Follow-up #3: status changed from `Promoted to v0.2.0 mandatory` → `DONE in this commit / branch`.",
+        "AGENTS.md Appendix A item 6: status changed to DONE with the commit short SHA (filled at the end after the hoist commit lands) OR a note that the status will be filled at commit time.",
+        "No regressions introduced to `docs/architecture_plan.md`, `docs/provider_roadmap.md`, `docs/provider_matrix.md`, `docs/prd.md` (these are binding/reference and stay untouched in this run)."
+      ]
+    }
+  ]
+}
