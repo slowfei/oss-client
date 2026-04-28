@@ -2,6 +2,9 @@ go 1.25.0
 
 use (
 	./
+	./examples/direct_grant_qiniu
+	./examples/direct_grant_upyun
+	./examples/multipart
 	./examples/quickstart
 	./pkg/testkit/contract
 	./providers/alibaba

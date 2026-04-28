@@ -333,6 +333,49 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
   duplication as the proof; M3 drivers consume the shared helpers
   from day one rather than duplicating the wire-level mappings.
 
+### Added (M6 phase 2+3 — examples, benchmarks, polish docs)
+
+- **`examples/multipart/`**: runnable end-to-end demo of
+  `MultipartService.Initiate` → `UploadPart` × 3 (5 MiB each) → `Complete`,
+  plus an `Abort` lifecycle demo. Defaults to local MinIO via env-var
+  config; pivots to AWS or any other provider via `OMC_MULTIPART_PROVIDER`.
+- **`examples/direct_grant_qiniu/`**: Qiniu Upload Token + Download URL
+  DirectGrant demo. Educational (placeholder credentials produce
+  structurally-correct output). Demonstrates the M5 `DirectGrantModeToken`
+  semantic + the v0.1.1 Download `DirectGrantModeURL` correction. Lists the
+  8 PutPolicy override `req.Extra` keys recognized by the qiniu driver.
+- **`examples/direct_grant_upyun/`**: Upyun FORM upload DirectGrant demo.
+  Validates the M5 final-frozen `DirectGrantModeForm` shape (the LAST of
+  4 frozen DirectGrantMode values exercised in production). Shows the
+  Qiniu-vs-Upyun side-by-side dispatch comparison.
+- **`benchmarks/`**: per-provider Put / Get / Multipart / SignURL throughput
+  benchmark scaffold. M6 phase 2 baseline ships AWS + MinIO benchmarks
+  (S3-family); per-vendor sweeps for the 8 non-S3 drivers land at
+  v1.0.0 cut. Uses `testcontainers-go` MinIO (Docker required); standalone
+  module (`GOWORK=off go test -tags=docker -bench=.`) so transitive
+  testcontainers deps stay out of the root module's chain.
+- **`docs/migration_guide.md`**: vendor-SDK → pkg/uos migration walkthrough.
+  Covers Open / Put / Get / Multipart / Sign translation patterns; per-
+  vendor SDK mapping table; capability discovery; error handling
+  translation; multi-vendor support pattern; explicit "when NOT to migrate"
+  guidance.
+- **`docs/otel_alignment.md`**: M6 phase 3 audit of `pkg/uos/middleware`'s
+  observability surface against the OpenTelemetry Semantic Conventions for
+  Object Stores (OTel spec v1.27.0). Per-field alignment matrix +
+  recommended span name convention + 5 v0.2.0 work items + redaction
+  status (verified complete across all 10 providers) + reference exporter
+  sketch.
+- **`docs/v1_polish_audit.md`**: M6 phase 3 v1.0.0 readiness review.
+  Covers the 3 architecture_plan §M6 audit areas: idempotency markers
+  (verdict: READY — DefaultIsIdempotent's conservative default + opt-in
+  Patterns A/B/C); retry-budget guards (READY — 10 drivers verified to
+  honor single-source-of-truth); log redaction (READY — no gaps across
+  10 providers). Final v1.0.0 readiness verdict: READY pending
+  Appendix A consolidation + maintainer tag pass.
+- **`.gitignore`**: explicit ignore for compiled `examples/<name>/<name>`
+  binaries (M6 Phase 2 executors built per-example binaries during
+  verification, polluting `git status`).
+
 ### Fixed (post-M5 v0.1.1 patch — architect-flagged correctness items)
 
 - **`providers/azure` multipart `Initiate.Metadata` round-trip

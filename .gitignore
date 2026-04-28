@@ -13,3 +13,14 @@
 
 # Local Claude Code session state.
 .claude/
+
+# Compiled binaries from `go build .` in example modules. Each example/<name>/
+# is `package main` so `go build .` from inside that dir produces a binary
+# named <name>. Keeping these out of git so a routine local build doesn't
+# pollute git status.
+/examples/*/quickstart
+/examples/quickstart/quickstart
+/examples/multipart/multipart
+/examples/direct_grant_qiniu/direct_grant_qiniu
+/examples/direct_grant_upyun/direct_grant_upyun
+/quickstart
