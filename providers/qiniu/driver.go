@@ -943,11 +943,15 @@ func (s signerService) IssueDirectGrant(_ context.Context, req uos.DirectGrantRe
 		}
 		deadline := expires.Unix()
 		signedURL := storage.MakePrivateURL(s.d.mac, s.d.dc.Domain, req.Key, deadline)
+		// v0.1.1: Mode=URL is the architecturally honest encoding for
+		// Qiniu's URL-shaped Download Token; the M5 ship used Mode=Token
+		// for cross-operation dispatch symmetry, but Mode=URL tells the
+		// truth (callers GET DirectGrant.URL directly; no opaque bearer
+		// token semantics apply).
 		return &uos.DirectGrant{
-			Mode:      uos.DirectGrantModeToken,
+			Mode:      uos.DirectGrantModeURL,
 			URL:       signedURL,
 			Method:    http.MethodGet,
-			Token:     signedURL,
 			ExpiresAt: expires,
 		}, nil
 

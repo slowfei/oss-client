@@ -90,7 +90,8 @@ type uploadSession struct {
 	key       string
 	uploadID  string
 	initiated time.Time
-	blockIDs  []string // base64-encoded block IDs in insertion order
+	blockIDs  []string     // base64-encoded block IDs in insertion order
+	meta      uos.Metadata // captured at Initiate, replayed at CommitBlockList
 }
 
 // Provider returns "azure".
@@ -693,6 +694,7 @@ func (m multipartService) Initiate(_ context.Context, req uos.InitiateMultipartR
 		key:       req.Key,
 		uploadID:  uploadID,
 		initiated: time.Now().UTC(),
+		meta:      req.Metadata,
 	}
 	m.d.storeSession(sess)
 	return &uos.MultipartUpload{
@@ -862,9 +864,11 @@ func (m multipartService) List(_ context.Context, req uos.ListMultipartUploadsRe
 	return out, nil
 }
 
-// metadata returns the metadata stored in the session at Initiate time.
+// metadata returns the metadata captured at Initiate time. Replayed by
+// CommitBlockList so callers' Initiate.Metadata round-trips to the final
+// blob (architect-flagged v0.1.1 fix).
 func (s *uploadSession) metadata() uos.Metadata {
-	return nil // sessions do not persist metadata in this implementation
+	return s.meta
 }
 
 // ----------------------------------------------------------------------

@@ -333,6 +333,39 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
   duplication as the proof; M3 drivers consume the shared helpers
   from day one rather than duplicating the wire-level mappings.
 
+### Fixed (post-M5 v0.1.1 patch — architect-flagged correctness items)
+
+- **`providers/azure` multipart `Initiate.Metadata` round-trip
+  to `Complete`**: `uploadSession.metadata()` returned `nil`
+  unconditionally, dropping caller-supplied metadata at
+  `CommitBlockList` time. Now `uploadSession` carries a `meta
+  uos.Metadata` field captured at `Initiate` and replayed at
+  `Complete`. Only Azure was affected (other multipart drivers
+  pass metadata directly through their SDKs' Init APIs); the
+  PR-gate contract suite did not exercise multipart-with-metadata
+  so the gap silently slipped through M4. Architect-flagged in
+  M4 review; fixed in v0.1.1.
+- **All 9 non-AWS drivers' `mapError()` `errors.As(&alreadyMapped)`
+  early-return now augments the inner `*uos.Error` with caller
+  context** (Provider / Operation / Bucket / Key) when those
+  fields are empty, instead of identity-passing through and
+  losing the outer mapError's context. Affects `providers/{alibaba,
+  azure, gcs, huawei, minio, qiniu, tencent, upyun, volcengine}`.
+  AWS uses a different `mapError` shape with no
+  `errors.As(&alreadyMapped)` guard, so it was not affected.
+  Cross-driver consistent fix; architect-flagged in M5 review.
+- **`providers/qiniu` `Signer.IssueDirectGrant(Download)` Mode
+  changed from `DirectGrantModeToken` to `DirectGrantModeURL`**.
+  Qiniu's Download "Token" is technically a `MakePrivateURL`
+  signature embedded in a URL — `Mode=URL` tells the truth
+  (callers GET `DirectGrant.URL` directly; no opaque bearer
+  token semantics apply). The M5 ship used `Mode=Token` for
+  cross-operation dispatch symmetry; architect-flagged as
+  doc-clarity fix. Upload path unchanged (still
+  `Mode=DirectGrantModeToken` — Qiniu Upload Token IS a true
+  bearer-string-in-form-field). `DirectGrant.Token` field is no
+  longer set on Download (was redundant under `Mode=URL`).
+
 ## [providers/aws/v0.1.0] — 2026-04-28 — M2 (AWS native driver)
 
 First tagged release of the AWS S3 native driver. Implements every

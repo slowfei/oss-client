@@ -35,7 +35,24 @@ func mapError(provider uos.Provider, op, bucket, key string, err error) error {
 	// validation, capability gating, etc.).
 	var alreadyMapped *uos.Error
 	if errors.As(err, &alreadyMapped) {
-		return alreadyMapped
+		// v0.1.1 patch: augment with caller's context if the inner
+		// *uos.Error lacks it. Identity-pass loses Operation/Bucket/Key
+		// when an inner layer (capability gating, arg validation) built
+		// the error with only Code+Message.
+		augmented := *alreadyMapped
+		if augmented.Provider == "" {
+			augmented.Provider = provider
+		}
+		if augmented.Operation == "" {
+			augmented.Operation = op
+		}
+		if augmented.Bucket == "" {
+			augmented.Bucket = bucket
+		}
+		if augmented.Key == "" {
+			augmented.Key = key
+		}
+		return &augmented
 	}
 
 	out := &uos.Error{
