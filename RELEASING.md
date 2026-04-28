@@ -149,6 +149,15 @@ git push origin providers/huawei/v0.1.0
 
 git tag providers/volcengine/v0.1.0
 git push origin providers/volcengine/v0.1.0
+
+# Tag M4 provider modules (the non-HMAC milestone — gcs uses
+# OAuth2/Service Account/ADC, azure uses SharedKey/SAS/Entra).
+# Same replace-cleanup-per-commit pattern as M2/M3.
+git tag providers/gcs/v0.1.0
+git push origin providers/gcs/v0.1.0
+
+git tag providers/azure/v0.1.0
+git push origin providers/azure/v0.1.0
 ```
 
 After tagging, verify both tags are fetchable:

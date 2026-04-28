@@ -11,6 +11,84 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ### Added
 
+- **`providers/gcs/v0.1.0`** (M4, native non-HMAC driver against
+  Google Cloud Storage via `cloud.google.com/go/storage v1.62.1`):
+  full `pkg/uos.Client` surface (Bucket / Object / Multipart /
+  Signer). `AuthOAuth2` default with Service Account JSON, ADC, or
+  Workload Identity Federation; `AuthHMAC` available for HMAC keys.
+  GCS resumable upload mapped onto `MultipartService` with two
+  documented scope concessions: (a) sequential-only — out-of-order
+  `UploadPart` returns `ErrInvalidArgument` because the SDK's
+  `*storage.Writer` enforces contiguous byte ranges; (b)
+  per-process upload session registry — `MultipartService.List`
+  returns an empty page because the SDK does not expose the
+  resumable session URL from the high-level Writer. Both are
+  documented in `provider_roadmap.md` Lessons (M4); neither
+  requires a `pkg/uos` change. Bypasses `pkg/uos/transfer.Manager`.
+  `Signer.SignURL` uses V4 signing; if the resolved credential
+  lacks a private key (ADC w/o key, Compute Engine, GKE Workload
+  Identity), `SignURL` returns `*uos.Error{Code: ErrUnsupported,
+  Capability: CapSignedURLRead/Write, Reason: "credential lacks
+  signing key"}` per matrix footnote 1. `Signer.IssueDirectGrant`
+  returns `ErrUnsupported{CapDirectGrant}` per matrix footnote 5.
+  Versioning uses GCS generation-int64 numbers, formatted as
+  decimal strings round-tripped through `ObjectInfo.VersionID` and
+  `req.VersionID`. `error_map.go` houses a LOCAL
+  `mapGoogleAPIReason` switch (~25 GCS-specific reason strings →
+  14 frozen `Code`s); `s3common.MapCodeString` was deliberately
+  NOT extended (GCS is non-S3-family). `s3common.MapHTTPStatus` +
+  `MapContextErr` + `IsRetryable` + `LowerMetadataKeys` reused as
+  wire-protocol-agnostic helpers. SDK-internal retry disabled via
+  `*storage.Client.SetRetry(storage.WithMaxAttempts(1),
+  storage.WithPolicy(storage.RetryNever))`. Test: `TestRunSuite`
+  SKIPs by default (GCS dialect ≠ MinIO S3 SigV4); cloud-nightly
+  env vars `OMC_GCS_NIGHTLY_KEY`/`_BUCKET`/`_PROJECT` gate the
+  real-GCS contract suite. `TestSpawnMinIOSmoke` runs in PR gate.
+
+- **`providers/azure/v0.1.0`** (M4, native non-HMAC driver against
+  Azure Blob Storage via
+  `github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4`):
+  full `pkg/uos.Client` surface. `AuthSharedKey` default
+  (AccountName + AccountKey); `AuthSAS` (token string) and
+  `AuthCustom` (Entra ID / user-delegation key) supported via
+  per-scheme `azblob` constructor dispatch. `DriverConfig.StorageAccount`
+  required (Azure has no S3-style "region" — Storage Account
+  encodes location). Container ↔ `Bucket` 1:1. Azure Block Blob
+  mapped onto `MultipartService`: `PartNumber` synthesises
+  base64-encoded block IDs; `Complete` issues `PutBlockList`.
+  Block Blob's 4 MiB minimum staging-block size differs from S3's
+  5 MiB — sub-4-MiB parts get `ErrInvalidArgument` from Azure at
+  `StageBlock` time; documented in `provider_roadmap.md`
+  Lessons (M4) as a deferred `Capabilities().MinPartSize` v0.2.0
+  candidate (needs ≥2 providers per ADR rule). Bypasses
+  `pkg/uos/transfer.Manager`. **DirectGrant via `DirectGrantModeToken`
+  validates the frozen 4-mode set** — `Signer.IssueDirectGrant`
+  returns the SAS query-string in `DirectGrant.Token`; caller
+  constructs the final URL as `DirectGrant.URL + "?" +
+  DirectGrant.Token`; `DirectGrant.Headers` carries `x-ms-version`
+  for protocol-version pinning. `Signer.SignURL` uses SAS with
+  start-time set to `now − 5min` for clock-skew tolerance and
+  expiry per `request.ExpiresIn`; the start-time fits inside the
+  existing `SignURLRequest` shape — no surface change. Account-key
+  SAS works with `AuthSharedKey`; user-delegation SAS requires
+  `AuthCustom` and a `GetUserDelegationCredential` round-trip
+  (validity = `ExpiresIn + 5min`). `error_map.go` houses a LOCAL
+  `mapAzureErrorCode` switch (~50 Azure ErrorCodes → 14 frozen
+  `Code`s) keyed on `*azcore.ResponseError.ErrorCode`;
+  `s3common.MapCodeString` deliberately NOT extended.
+  `CapObjectACL` returns `ErrUnsupported{CapObjectACL}` at call
+  time per matrix footnote 11 — Azure has no per-object ACL
+  surface; access controlled via SAS / RBAC / per-blob SAS with
+  restricted permissions. `CapVersioning` returns
+  `ErrUnsupported{CapVersioning, Reason: "blob versioning is not
+  enabled at the storage account level"}` if the account lacks
+  it (footnote 8). `VersionID` is applied via `blob.Client.WithVersionID()`
+  scoping (not an option field). SDK-internal retry disabled via
+  `azcore.ClientOptions{Retry: policy.RetryOptions{MaxRetries: 0}}`.
+  Test: `TestRunSuite` SKIPs by default; cloud-nightly env vars
+  `OMC_AZURE_NIGHTLY_ACCOUNT`/`_KEY`/`_CONTAINER` gate real-Azure
+  contract. `TestSpawnMinIOSmoke` runs in PR gate.
+
 - **`providers/tencent/v0.1.0`** (M3 phase 2, native HMAC against
   Tencent COS via `cos-go-sdk-v5`): full `pkg/uos.Client` surface
   (Bucket / Object / Multipart / Signer); presign via COS HMAC v1

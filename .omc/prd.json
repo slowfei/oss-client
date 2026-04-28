@@ -1,77 +1,61 @@
 {
-  "task": "M3 phase 2: implement remaining 3 国云 native drivers (providers/tencent + providers/huawei + providers/volcengine) using the alibaba commit (78dd457) as reference and the cross-vendor lessons captured in its commit message. All consume pkg/uos/s3common; all skip RunSuite-by-default (vendor SDK ≠ AWS SigV4); all gate cloud-nightly env vars per OMC_<VENDOR>_NIGHTLY_*. Update matrix + CHANGELOG + RELEASING. Tag commands maintainer-gated.",
-  "scope_note": "Phase 2 of M3. Tags providers/<name>/v0.1.0 are maintainer-gated per RELEASING.md §4. M4 (GCS+Azure) is the next session's work.",
+  "task": "M4: implement the 2 non-HMAC drivers (providers/gcs + providers/azure) — the abstraction stress test for OAuth2 / SharedKey / SAS / User Delegation. Per provider_roadmap.md M4 exit checklist: NO new Code/Capability/DirectGrantMode may be added to pkg/uos (frozen surface enforced by TestFrozenSurface). Any abstraction-pressure point discovered must be logged to provider_roadmap.md 'Lessons (M4)' instead of growing pkg/uos. Update matrix + CHANGELOG + RELEASING. Tag commands maintainer-gated.",
+  "scope_note": "M4 = 2 providers in parallel via Ralph (same shape as M3 phase 2). M5 (qiniu+upyun, the DirectGrant-non-URL milestone) is the next session. v0.2.0 retrofit (architect's 4 optimization notes + httpx flake fix) deferred until M4 informs whether the s3common abstraction needs widening for non-S3 vendors.",
   "session_started": "2026-04-28",
-  "all_stories_complete": false,
+  "all_stories_complete": true,
   "stories": [
     {
       "id": "US-001",
-      "title": "providers/tencent native driver (cos-go-sdk-v5)",
+      "title": "providers/gcs native driver (cloud.google.com/go/storage)",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
-        "providers/tencent/ scaffolded via scripts/add-provider.sh tencent (go.mod with module github.com/maqian/object-storage-client/providers/tencent + parent + testkit requires + replace directives).",
-        "providers/tencent/go.mod requires github.com/tencentyun/cos-go-sdk-v5 directly; no other cloud SDKs.",
-        "factory.go implements uos.Factory: Provider() = 'tencent'; Validate requires Region+CredentialProvider (Tencent COS bucket name MUST contain `-<appid>` suffix — document this in Validate's doc comment, but DO NOT enforce since DriverConfig.AppID may have set it); Open builds the COS BaseURL from region+optional appid + custom endpoint, configures HMAC creds, disables SDK retryer.",
-        "driver.go implements full uos.Client + 4 sub-services using cos-go-sdk-v5. Multipart via Object.InitiateMultipartUpload/UploadPart/CompleteMultipartUpload/AbortMultipartUpload (bypasses transfer.Manager per M2 + Uploader contract).",
-        "Metadata key prefix: x-cos-meta-* (use s3common.LowerMetadataKeys for case-folding; strip/add prefix per direction).",
-        "Signer.SignURL via cos-go-sdk-v5's GetPresignedURL. Signer.IssueDirectGrant returns ErrUnsupported{CapDirectGrant} per matrix footnote 5.",
-        "error_map.go uses s3common.MapCodeString → MapHTTPStatus → MapContextErr → ErrInternal decision tree on top of cos-go-sdk-v5's *cos.ErrorResponse extraction. Pass through any pre-existing *uos.Error.",
-        "capabilities.go returns the 13-cell Report matching the tencent column shape: 9 ✅ / 1 ❌ / 2 🟡 / 1 🧩 (same as aws+minio+alibaba — S3-family).",
-        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default (cos signature ≠ SigV4); cloud-nightly env vars OMC_TENCENT_NIGHTLY_KEY/_SECRET/_BUCKET/_REGION/_APPID gate the real-COS contract suite. TestSpawnMinIOSmoke runs in PR gate (validates testkit wiring).",
-        "From providers/tencent: go build / go vet / gofmt -l . silent. From root: TestFrozenSurface 3 subtests pass (no Code/Cap added).",
-        "Report any tencent-specific S3-compat error codes NOT in s3common.MapCodeString — lead will extend s3common in a follow-up if any surface."
+        "providers/gcs/ scaffolded via scripts/add-provider.sh gcs (go.mod with module github.com/maqian/object-storage-client/providers/gcs + parent + testkit requires + replace directives).",
+        "providers/gcs/go.mod requires cloud.google.com/go/storage directly; no other cloud SDKs. Pin Go version that the SDK requires (likely 1.22+).",
+        "factory.go implements uos.Factory: Provider() = 'gcs'; Validate accepts CredentialProvider (OAuth2/Service Account/ADC chain) OR HMAC keys (when AuthScheme=AuthHMAC); Open builds the storage.Client with the resolved credential, optional custom endpoint (for emulator / regional override), and disables the SDK's internal retryer (storage.WithBackoff(gax.Backoff{Max: 0}) or equivalent).",
+        "driver.go implements full uos.Client + 4 sub-services using cloud.google.com/go/storage. Multipart: GCS does NOT have S3 multipart; instead it has resumable uploads. Map MultipartService to the resumable-upload session API (one InitiateMultipartUpload returns a session URL; UploadPart writes a chunk to the session; CompleteMultipartUpload finalizes). Bypasses transfer.Manager. If the resumable-upload semantics diverge irreconcilably from the S3 multipart contract, document the gap in provider_roadmap.md Lessons (M4) BEFORE implementing — do not silently warp the unified surface.",
+        "Metadata key prefix: GCS uses arbitrary metadata keys (no x-goog-meta-* enforcement at the SDK level); use s3common.LowerMetadataKeys for case-folding to keep cross-provider behavior consistent. Document in driver doc.",
+        "Signer.SignURL via storage.SignedURL with V4 signing. If the resolved credential lacks a private key (e.g., ADC without a key file, ComputeEngine credentials), SignURL returns *uos.Error{Code: ErrUnsupported, Capability: CapSignedURLRead, Reason: 'credential lacks signing key'}. SignedURLWrite has the same gating. Signer.IssueDirectGrant returns ErrUnsupported{CapDirectGrant} per matrix footnote 5 (GCS issues writes as URL, no token grant).",
+        "error_map.go: GCS errors come back as *googleapi.Error with HTTP status + Code string. Use s3common.MapHTTPStatus + s3common.MapContextErr; GCS Code strings are vendor-specific, so DO NOT add them to s3common.MapCodeString (that's S3-family only) — instead handle them in a local switch in error_map.go. If any frequently-needed pattern emerges, document it in provider_roadmap.md Lessons (M4) for v0.2.0 consideration.",
+        "capabilities.go returns the 13-cell Report matching the gcs column in docs/provider_matrix.md: 7 ✅ (BucketCRUD, ObjectCRUD, ListPrefixDelimiter, RangeRead, MultipartUpload, ObjectTagging, ManagedEncryption, Versioning) + 2 🟡¹ (SignedURLRead, SignedURLWrite — credential-dependent) + 1 ❌⁵ (DirectGrant) + 1 🟡¹⁰ (ObjectACL — Uniform vs Fine-grained) + 1 🧩¹² (NativeMove). NOTE: Versioning ⏳M4 → ✅ (GCS object versioning is bucket-level boolean like S3, but the API model is generation-number-based and works without bucket setup); document the semantic in capabilities.go doc.",
+        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default (GCS XML/JSON dialect ≠ MinIO S3 SigV4); cloud-nightly env vars OMC_GCS_NIGHTLY_KEY (path to service account JSON) + OMC_GCS_NIGHTLY_BUCKET + OMC_GCS_NIGHTLY_PROJECT gate the real-GCS contract suite. TestSpawnMinIOSmoke runs in PR gate (validates testkit wiring).",
+        "From providers/gcs: go build / go vet / gofmt -l . silent. From root: TestFrozenSurface 3 subtests pass (no Code/Cap/DirectGrantMode added — this is the M4 hard fence).",
+        "Report any abstraction-pressure point discovered (e.g., 'resumable upload doesn't fit Multipart contract', 'OAuth2 credential rotation isn't expressible in CredentialProvider') in provider_roadmap.md Lessons (M4)."
       ]
     },
     {
       "id": "US-002",
-      "title": "providers/huawei native driver (huaweicloud-sdk-go-obs)",
+      "title": "providers/azure native driver (azure-sdk-for-go/sdk/storage/azblob)",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
-        "providers/huawei/ scaffolded; go.mod requires github.com/huaweicloud/huaweicloud-sdk-go-obs directly.",
-        "factory.go implements uos.Factory: Provider() = 'huawei'; Validate requires Endpoint (region/endpoint pairing is strict per provider_roadmap.md M3 risk note — incorrect pairing causes silent 301/307 redirects); Open builds the OBS Client with HMAC creds, custom endpoint, disabled SDK retryer.",
-        "driver.go implements full uos.Client + 4 sub-services using huaweicloud-sdk-go-obs. Multipart via the OBS native primitives (InitiateMultipartUpload/UploadPart/CompleteMultipartUpload/AbortMultipartUpload). Bypasses transfer.Manager.",
-        "Metadata key prefix: x-obs-meta-* (use s3common.LowerMetadataKeys; strip/add per direction).",
-        "Signer.SignURL via OBS's signed URL helper. Signer.IssueDirectGrant returns ErrUnsupported{CapDirectGrant}.",
-        "error_map.go uses the s3common decision tree on top of obs.ObsError extraction.",
-        "capabilities.go returns the 13-cell Report matching huawei column (S3-family default shape — 9 ✅ / 1 ❌ / 2 🟡 / 1 🧩).",
-        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default; OMC_HUAWEI_NIGHTLY_* env vars gate real-OBS contract. TestSpawnMinIOSmoke runs in PR gate.",
-        "From providers/huawei: go build / go vet / gofmt -l . silent. TestFrozenSurface still passes.",
-        "Report any OBS-specific error codes NOT in s3common.MapCodeString."
+        "providers/azure/ scaffolded; go.mod requires github.com/Azure/azure-sdk-for-go/sdk/storage/azblob directly. Pin Go version that the SDK requires.",
+        "factory.go implements uos.Factory: Provider() = 'azure'; Validate requires DriverConfig.StorageAccount (Azure has no S3-style 'region' — the storage account encodes the location); CredentialProvider may yield SharedKey (AccountName+AccountKey), SAS (token string), or AuthCustom (Entra ID / user-delegation key). Open builds the appropriate azblob client variant: NewClientWithSharedKeyCredential / NewClientWithNoCredential+SAS / NewClientWithAzureADCredential.",
+        "driver.go implements full uos.Client + 4 sub-services using azblob. Bucket maps to Azure Container (1:1). Multipart: Azure uses Block Blob with PutBlock / PutBlockList. Map MultipartService to PutBlock+PutBlockList (each block has a base64-encoded ID; the 'parts' list becomes the BlockList in the Commit step). Bypasses transfer.Manager. Document any divergence (e.g., 4 MiB minimum block size on staging blocks vs S3's 5 MiB) in provider_roadmap.md Lessons (M4) — do NOT widen pkg/uos to absorb.",
+        "Metadata key prefix: Azure uses x-ms-meta-* on the wire but the SDK strips the prefix in its Metadata map[string]string; use s3common.LowerMetadataKeys for case-folding (Azure metadata keys are case-insensitive but the SDK preserves user case).",
+        "Signer.SignURL: issues SAS via the azblob SAS package. account-key SAS works with AuthSharedKey; user-delegation SAS works with AuthCustom carrying an Entra-issued user-delegation key. SAS includes a start-time semantic (signedstart=…) that SignURL ignores — start-time is set to (now - 5 min) for clock-skew tolerance, expiry per request.ExpiresIn. Document this in Signer doc.",
+        "Signer.IssueDirectGrant: Azure SAS can be expressed as URL (via SignURL) OR as token+headers (DirectGrant). Implement both — DirectGrant returns *uos.DirectGrant with Mode=DirectGrantModeToken (one of the existing 4 frozen DirectGrantModes; verify it's already in the frozen set BEFORE implementing — if not, this is a hard stop and goes to Lessons (M4)). DirectGrant.Token = SAS string; DirectGrant.Headers may include x-ms-version. capabilities.go marks CapDirectGrant ✅ for Azure (validation moment for the frozen DirectGrantMode set).",
+        "error_map.go: azblob errors come back as *azcore.ResponseError with ErrorCode string (e.g., 'BlobNotFound', 'ContainerNotFound', 'AuthenticationFailed'). Use s3common.MapHTTPStatus + s3common.MapContextErr. Azure ErrorCodes are vendor-specific — handle in a local switch in error_map.go (same pattern as gcs); DO NOT pollute s3common.MapCodeString.",
+        "capabilities.go returns the 13-cell Report matching the azure column: 6 ✅ (BucketCRUD, ObjectCRUD, ListPrefixDelimiter, RangeRead, MultipartUpload, ObjectTagging) + 1 ✅ DirectGrant⁶ (per matrix footnote 6 — Azure SAS as both URL and token-headers) + 2 🟡² (SignedURLRead, SignedURLWrite — SAS scheme-dependent) + 1 ❌¹¹ (ObjectACL — Azure has no S3-style per-object ACL; per footnote 11) + 1 🟡⁸ (Versioning — requires account-level enablement, per footnote 8) + 1 ⏳M4→✅ (ManagedEncryption — Azure server-side encryption is on by default; ✅ with note) + 1 🧩¹² (NativeMove). Total = 13.",
+        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default (Azure SharedKey/SAS dialect ≠ MinIO S3 SigV4); cloud-nightly env vars OMC_AZURE_NIGHTLY_ACCOUNT + OMC_AZURE_NIGHTLY_KEY + OMC_AZURE_NIGHTLY_CONTAINER gate the real-Azure contract suite. TestSpawnMinIOSmoke runs in PR gate.",
+        "From providers/azure: go build / go vet / gofmt -l . silent. TestFrozenSurface still passes (the M4 hard fence).",
+        "Report any abstraction-pressure point in provider_roadmap.md Lessons (M4): notably whether 'SAS includes start-time' fits in pkg/uos.Signer.SignURL request, and whether Block Blob's PutBlockList semantics fit cleanly into the Multipart abort/complete contract."
       ]
     },
     {
       "id": "US-003",
-      "title": "providers/volcengine native driver (ve-tos-golang-sdk/v2/tos)",
+      "title": "Matrix + CHANGELOG + RELEASING + provider_roadmap (M4 lessons) update",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
-        "providers/volcengine/ scaffolded; go.mod requires github.com/volcengine/ve-tos-golang-sdk/v2 directly.",
-        "factory.go implements uos.Factory: Provider() = 'volcengine'; Validate requires Region+CredentialProvider; Open builds the TOS Client with HMAC creds + custom endpoint, disabled SDK retryer.",
-        "driver.go implements full uos.Client + 4 sub-services using ve-tos-golang-sdk/v2/tos. Multipart via TOS native primitives. Bypasses transfer.Manager.",
-        "Metadata key prefix: x-tos-meta-*.",
-        "Signer.SignURL via tos.PreSignedURL. IssueDirectGrant returns ErrUnsupported{CapDirectGrant}.",
-        "Storage class strings: TOS uses STANDARD/IA/ARCHIVE_FR/ARCHIVE — pass through opaquely; the unified StorageClass field accepts the vendor's literal.",
-        "error_map.go uses the s3common decision tree on top of tos.TosServerError extraction.",
-        "capabilities.go returns the 13-cell Report (S3-family shape).",
-        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default; OMC_VOLCENGINE_NIGHTLY_* env vars gate real-TOS contract. TestSpawnMinIOSmoke runs in PR gate.",
-        "From providers/volcengine: go build / go vet / gofmt -l . silent. TestFrozenSurface still passes.",
-        "Report any TOS-specific error codes NOT in s3common.MapCodeString."
-      ]
-    },
-    {
-      "id": "US-004",
-      "title": "Matrix update + CHANGELOG/RELEASING/AGENTS for the 3 new providers",
-      "priority": 4,
-      "passes": false,
-      "acceptanceCriteria": [
-        "docs/provider_matrix.md: tencent + huawei + volcengine driver-status rows updated to 'Shipped (v0.1.0)'.",
-        "docs/provider_matrix.md: 13 capability rows × 3 columns (tencent + huawei + volcengine) updated from ⏳M3 placeholders to actual symbols matching each driver's capabilities() return. Same 9 ✅ / 1 ❌⁵ / 2 🟡 / 1 🧩¹² shape as alibaba/aws/minio.",
-        "CHANGELOG.md [Unreleased] gains entries for providers/tencent/v0.1.0, providers/huawei/v0.1.0, providers/volcengine/v0.1.0 — each summarising SDK choice, cross-vendor SDK pattern reuse, and any vendor-specific s3common extension if applicable.",
-        "RELEASING.md §4: provider tag commands extended to include providers/tencent/v0.1.0, providers/huawei/v0.1.0, providers/volcengine/v0.1.0.",
-        "AGENTS.md if any architectural follow-up surfaced (e.g., new s3common gap-fill for additional vendor codes), update item 4 accordingly.",
-        "If any of the 3 drivers surfaced new S3-family error codes not in s3common.MapCodeString, extend the s3common table + tests in this same change-set (don't defer to a separate commit)."
+        "docs/provider_matrix.md: gcs + azure driver-status rows updated to 'Shipped (v0.1.0)'.",
+        "docs/provider_matrix.md: 13 capability rows × 2 columns (gcs + azure) updated from ⏳M4 placeholders to actual symbols matching each driver's capabilities() return. The shape DIFFERS from S3-family — this is expected per M4 validation focus.",
+        "CHANGELOG.md [Unreleased] gains entries for providers/gcs/v0.1.0 and providers/azure/v0.1.0 — each summarising SDK choice, auth-scheme model (OAuth2/SharedKey/SAS), the multipart-mapping decision (resumable upload for GCS / Block Blob for Azure), and any frozen-surface temptation deferred.",
+        "RELEASING.md §4: provider tag commands extended to include providers/gcs/v0.1.0 and providers/azure/v0.1.0.",
+        "docs/provider_roadmap.md 'Lessons (M4)' section filled in (replace the '_(to be filled)_' placeholder). MUST honestly state: (a) whether any abstraction-pressure point surfaced, and if so what it was; (b) whether v0.2.0 should consider widening any pkg/uos surface to absorb it; (c) the recommended deferral path (frozen-surface bump, helper extraction, or document-and-leave). If no abstraction defect surfaced, write 'no abstraction defect detected; gcs + azure shipped with zero pkg/uos change'.",
+        "AGENTS.md Appendix A status table — update item 4 (s3common scope) and add a new item if M4 lessons surfaced an abstraction question that should be tracked for v0.2.0.",
+        "go.work updated to list the 2 new modules (root + testkit + 6 S3-family + gcs + azure = 9 modules).",
+        "Final root-level go test -short -race ./... still green; TestFrozenSurface 3 subtests still pass."
       ]
     }
   ]

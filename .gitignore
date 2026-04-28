@@ -1,9 +1,15 @@
-# Local OMC orchestration state.
+# Local OMC orchestration state. Patterns match at any depth so subagents
+# spawned with cwd=<provider-dir> can't accidentally land state files in a
+# committed location (M4 azure executor incident, 2026-04-28).
 # Durable plan/spec artifacts under .omc/plans/ and .omc/specs/ are committed.
-.omc/state/
-.omc/sessions/
-.omc/project-memory.json
-.omc/notepad.md
+**/.omc/state/
+**/.omc/sessions/
+**/.omc/project-memory.json
+**/.omc/notepad.md
+**/.omc/last-tool-error.json
+**/.omc/mission-state.json
+**/.omc/subagent-tracking.json
+**/.omc/agent-replay-*.jsonl
 
 # Local Claude Code session state.
 .claude/

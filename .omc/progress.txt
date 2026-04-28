@@ -234,3 +234,81 @@ Post-deslop regression (Step 7.6) — all gates green again:
 
 Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
 
+================================================================================
+RALPH RUN #4 — M4 (gcs + azure) — 2026-04-28
+================================================================================
+
+Task: M4 milestone — implement providers/gcs + providers/azure native non-HMAC
+drivers. The abstraction stress test for OAuth2 / SharedKey / SAS / User
+Delegation. Hard fence: TestFrozenSurface 3-subtest must stay green; ANY
+abstraction-pressure point goes to docs/provider_roadmap.md Lessons (M4)
+instead of growing pkg/uos.
+
+PRD: 3 stories
+- US-001 providers/gcs (Opus executor, parallel)
+- US-002 providers/azure (Opus executor, parallel)
+- US-003 matrix + CHANGELOG + RELEASING + AGENTS (lead)
+
+Iteration log:
+- US-001 + US-002 fired in parallel (M3 phase 2 pattern proven)
+  - GCS executor: 2086 LoC; cloud.google.com/go/storage v1.62.1; 7 Lessons (M4)
+    bullets; resumable-upload mapped onto MultipartService with 2 documented
+    scope concessions (sequential-only, in-process registry); validated that
+    SignURL credential-deficient ErrUnsupported pattern fits frozen surface;
+    LOCAL mapGoogleAPIReason switch in error_map.go (s3common.MapCodeString
+    NOT polluted)
+  - Azure executor: terminated mid-stream after scaffold; resumed via
+    SendMessage with continuation prompt → returned 2191 LoC; azblob v1.6.4;
+    7 Lessons (M4) bullets; Block Blob mapped onto MultipartService with
+    documented 4-MiB-min divergence; **DirectGrantModeToken validated for
+    Azure SAS — fits one of the existing 4 frozen DirectGrantModes, no new
+    mode needed**; SAS start-time set to now-5min (clock-skew tolerance) and
+    fits inside SignURLRequest.ExpiresIn; LOCAL mapAzureErrorCode switch
+    (~50 codes) in error_map.go
+- US-003 docs:
+  - matrix: 16 cells updated (2 driver-status rows + 13 cap rows × 2 cols);
+    grep ⏳M4 → 0 matches confirms full sweep
+  - CHANGELOG: 2 new [Unreleased] entries above tencent (gcs first, azure
+    second) — both call out the multipart-mapping decision and frozen-surface
+    temptation deferred
+  - RELEASING §4: 2 new tag commands appended to existing list
+  - AGENTS.md item 4 (s3common): updated with M4 boundary-validation note;
+    new item 7 added capturing M4 outcome + 3 v0.2.0 deferred candidates
+    (MinPartSize, sequential-only multipart flag, credential.Provider.Rotate)
+- Architect verification (Opus): VERDICT APPROVED; 8 v0.2.0 optimization
+  notes (matches M3 phase 2 baseline shape — none gating); 1 strong-recommend
+  doc bullet (Azure multipart Initiate.Metadata not persisted to Complete) →
+  added to provider_roadmap.md Lessons (M4) as v0.2.0 fix candidate
+- Deslop pass (Step 7.5):
+  - 1 substantive cleanup: deleted local `func max(a, b int)` from
+    gcs/driver.go (Go 1.25 has builtin since 1.21); 8 lines removed
+  - pickBucket triplication evaluated: established codebase pattern shared
+    by alibaba/tencent/huawei/volcengine; out of M4 deslop scope per skill
+    "don't expand changed-file scope" rule
+  - 8 architect optimization notes evaluated and explicitly deferred to v0.2.0
+- Post-deslop regression (Step 7.6) — all gates green:
+  - root go test -short -race -count=1 ./... → 6 packages PASS
+    (uos, capability=no-tests, credential, httpx, middleware, s3common,
+    transfer); httpx CLEAN — no M3 flake recurrence
+  - TestFrozenSurface: 3 subtests PASS
+  - providers/gcs: build/vet/fmt silent
+  - providers/azure: build/vet/fmt silent
+
+M4 verdict: 8 drivers shipped with **zero pkg/uos change**. Frozen 14/13/4
+sets all proven sufficient for the non-HMAC milestone. The s3common
+boundary held — neither non-S3 vendor extended MapCodeString. Azure SAS
+validated DirectGrantModeToken as a real-world fit (not just placeholder).
+
+3 v0.2.0 deferred candidates surfaced (need ≥2-provider justification per
+ADR rule):
+1. Capabilities().MinPartSize field (Azure 4 MiB ≠ S3 5 MiB; 1 provider)
+2. MultipartService sequential-only capability flag (GCS-only; 1 provider)
+3. credential.Provider.Rotate(ctx) hook (not needed for v1)
+
+Plus 1 v0.2.0 driver-internal bug:
+4. Azure multipart Initiate.Metadata not persisted to Complete (architect-
+   flagged; doc-bullet logged in Lessons M4; PR-gate contract suite doesn't
+   exercise multipart-with-metadata so silently passes)
+
+Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
+
