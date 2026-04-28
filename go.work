@@ -2,6 +2,7 @@ go 1.25.0
 
 use (
 	./
+	./examples/quickstart
 	./pkg/testkit/contract
 	./providers/alibaba
 	./providers/aws
@@ -13,4 +14,27 @@ use (
 	./providers/tencent
 	./providers/upyun
 	./providers/volcengine
+)
+
+// Workspace-level replace block: lets cross-module local-dev builds resolve
+// in-repo deps to the on-disk modules even when the published tags
+// (pkg/uos/v0.1.0, providers/<name>/v0.1.x) aren't yet on the proxy. Go 1.26
+// workspace mode no longer auto-resolves transitive in-workspace deps without
+// this hint when the required version is unpublished. These replaces are NOT
+// part of any module's release surface — they live only in go.work and are
+// not seen by downstream `go get` consumers (go.work is git-tracked but
+// honored only inside this repo).
+replace (
+	github.com/maqian/object-storage-client v0.1.0 => ./
+	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0 => ./pkg/testkit/contract
+	github.com/maqian/object-storage-client/providers/alibaba v0.1.1 => ./providers/alibaba
+	github.com/maqian/object-storage-client/providers/aws v0.1.0 => ./providers/aws
+	github.com/maqian/object-storage-client/providers/azure v0.1.1 => ./providers/azure
+	github.com/maqian/object-storage-client/providers/gcs v0.1.1 => ./providers/gcs
+	github.com/maqian/object-storage-client/providers/huawei v0.1.1 => ./providers/huawei
+	github.com/maqian/object-storage-client/providers/minio v0.1.1 => ./providers/minio
+	github.com/maqian/object-storage-client/providers/qiniu v0.1.1 => ./providers/qiniu
+	github.com/maqian/object-storage-client/providers/tencent v0.1.1 => ./providers/tencent
+	github.com/maqian/object-storage-client/providers/upyun v0.1.1 => ./providers/upyun
+	github.com/maqian/object-storage-client/providers/volcengine v0.1.1 => ./providers/volcengine
 )
