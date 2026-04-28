@@ -1,11 +1,11 @@
 # providers/minio
 
-`github.com/maqian/object-storage-client/providers/minio` — native driver for
+`github.com/maqian/oss-client/providers/minio` — native driver for
 **MinIO Object Storage** via [`github.com/minio/minio-go/v7`](https://godoc.org/github.com/minio/minio-go/v7).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/object-storage-client/providers/minio` |
+| Module path | `github.com/maqian/oss-client/providers/minio` |
 | Tag | `providers/minio/v0.1.1` |
 | Vendor SDK | `github.com/minio/minio-go/v7 v7.1.0` |
 | Provider id | `"minio"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/object-storage-client/providers/minio@providers/minio/v0.1.1
+go get github.com/maqian/oss-client/providers/minio@providers/minio/v0.1.1
 ```
 
 ## Quickstart
@@ -28,9 +28,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    _ "github.com/maqian/object-storage-client/providers/minio" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    _ "github.com/maqian/oss-client/providers/minio" // registers Factory
 )
 
 func main() {

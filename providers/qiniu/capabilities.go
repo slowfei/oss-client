@@ -1,6 +1,6 @@
 package qiniu
 
-import "github.com/maqian/object-storage-client/pkg/uos/capability"
+import "github.com/maqian/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Qiniu Cloud
 // Storage (Kodo) driver. Cell values mirror docs/provider_matrix.md (the

@@ -6,8 +6,8 @@ import (
 
 	"github.com/volcengine/ve-tos-golang-sdk/v2/tos"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/s3common"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/s3common"
 )
 
 // mapError translates a ve-tos-golang-sdk/v2/tos error into a *uos.Error

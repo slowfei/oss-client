@@ -572,7 +572,7 @@ M2 (AWS + MinIO) is unblocked from day one.
   plus case files for bucket, object, multipart, signer, capability,
   and error coverage. `minio.go` (build tag `docker`) wraps a
   `testcontainers-go` MinIO container for live cross-provider checks.
-  Lives at `github.com/maqian/object-storage-client/pkg/testkit/contract`
+  Lives at `github.com/maqian/oss-client/pkg/testkit/contract`
   with its own `go.mod`, isolating the testcontainers / Docker / OTel
   transitive chain from `pkg/uos` consumers.
 - **Frozen surface fence**: `pkg/uos/surface_test.go` /

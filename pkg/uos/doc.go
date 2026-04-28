@@ -52,8 +52,8 @@
 //
 //	import (
 //	    "context"
-//	    "github.com/maqian/object-storage-client/pkg/uos"
-//	    _ "github.com/maqian/object-storage-client/providers/aws" // registers Factory
+//	    "github.com/maqian/oss-client/pkg/uos"
+//	    _ "github.com/maqian/oss-client/providers/aws" // registers Factory
 //	)
 //
 //	cfg := uos.Config{Provider: "aws", /* region, endpoint, credentials, ... */}

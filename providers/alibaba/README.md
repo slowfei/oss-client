@@ -1,11 +1,11 @@
 # providers/alibaba
 
-`github.com/maqian/object-storage-client/providers/alibaba` — native driver for
+`github.com/maqian/oss-client/providers/alibaba` — native driver for
 **Alibaba Cloud Object Storage Service (OSS)** via [`github.com/aliyun/aliyun-oss-go-sdk/oss`](https://godoc.org/github.com/aliyun/aliyun-oss-go-sdk/oss).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/object-storage-client/providers/alibaba` |
+| Module path | `github.com/maqian/oss-client/providers/alibaba` |
 | Tag | `providers/alibaba/v0.1.1` |
 | Vendor SDK | `github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible` |
 | Provider id | `"alibaba"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/object-storage-client/providers/alibaba@providers/alibaba/v0.1.1
+go get github.com/maqian/oss-client/providers/alibaba@providers/alibaba/v0.1.1
 ```
 
 ## Quickstart
@@ -28,9 +28,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    _ "github.com/maqian/object-storage-client/providers/alibaba" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    _ "github.com/maqian/oss-client/providers/alibaba" // registers Factory
 )
 
 func main() {

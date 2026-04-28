@@ -100,8 +100,8 @@ import (
 
 	upyunsdk "github.com/upyun/go-sdk/v3/upyun"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
 )
 
 // providerID is the canonical Provider id this driver registers under.

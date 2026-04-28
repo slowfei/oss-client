@@ -40,10 +40,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/object-storage-client/pkg/testkit/contract"
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
-	azuredrv "github.com/maqian/object-storage-client/providers/azure"
+	"github.com/maqian/oss-client/pkg/testkit/contract"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
+	azuredrv "github.com/maqian/oss-client/providers/azure"
 )
 
 // TestRunSuite is the M4 PR-gate entry point. It runs the conformance suite

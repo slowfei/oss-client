@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos"
 )
 
 // runBucketCases enumerates the BucketService contract cases. Each

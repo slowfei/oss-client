@@ -49,11 +49,11 @@ Each provider is a separate Go module — pull only what you use:
 
 ```bash
 # Pull the unified API (zero third-party deps):
-go get github.com/maqian/object-storage-client@v0.1.0
+go get github.com/maqian/oss-client@v0.1.0
 
 # Pull one or more provider drivers (each registers itself via init):
-go get github.com/maqian/object-storage-client/providers/aws@v0.1.0
-go get github.com/maqian/object-storage-client/providers/minio@v0.1.1
+go get github.com/maqian/oss-client/providers/aws@v0.1.0
+go get github.com/maqian/oss-client/providers/minio@v0.1.1
 # ... or any of the other 8 providers
 ```
 
@@ -67,9 +67,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    _ "github.com/maqian/object-storage-client/providers/aws" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    _ "github.com/maqian/oss-client/providers/aws" // registers Factory
 )
 
 func main() {
@@ -108,7 +108,7 @@ SDK features not covered by the unified surface.
 
 | Module path | Tag | Purpose |
 | --- | --- | --- |
-| `github.com/maqian/object-storage-client` | `pkg/uos/v0.1.0` | Unified `Client` API (stdlib-only). |
+| `github.com/maqian/oss-client` | `pkg/uos/v0.1.0` | Unified `Client` API (stdlib-only). |
 | `.../pkg/testkit/contract` | `pkg/testkit/contract/v0.1.0` | Cross-provider contract test suite (testcontainers MinIO). |
 | `.../providers/aws` | `providers/aws/v0.1.0` | AWS S3 native driver (`aws-sdk-go-v2`). |
 | `.../providers/minio` | `providers/minio/v0.1.1` | MinIO native driver (`minio-go/v7`). |

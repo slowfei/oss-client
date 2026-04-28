@@ -1,4 +1,4 @@
-module github.com/maqian/object-storage-client/providers/azure
+module github.com/maqian/oss-client/providers/azure
 
 go 1.25.0
 
@@ -6,8 +6,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4
-	github.com/maqian/object-storage-client v0.1.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
+	github.com/maqian/oss-client v0.1.0
+	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0
 )
 
 require (

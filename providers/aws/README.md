@@ -1,11 +1,11 @@
 # providers/aws
 
-`github.com/maqian/object-storage-client/providers/aws` — native driver for
+`github.com/maqian/oss-client/providers/aws` — native driver for
 **Amazon Simple Storage Service (S3)** via [`github.com/aws/aws-sdk-go-v2/service/s3`](https://godoc.org/github.com/aws/aws-sdk-go-v2/service/s3).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/object-storage-client/providers/aws` |
+| Module path | `github.com/maqian/oss-client/providers/aws` |
 | Tag | `providers/aws/v0.1.0` |
 | Vendor SDK | `github.com/aws/aws-sdk-go-v2/service/s3 v1.100.0` |
 | Provider id | `"aws"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/object-storage-client/providers/aws@providers/aws/v0.1.0
+go get github.com/maqian/oss-client/providers/aws@providers/aws/v0.1.0
 ```
 
 ## Quickstart
@@ -28,9 +28,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    _ "github.com/maqian/object-storage-client/providers/aws" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    _ "github.com/maqian/oss-client/providers/aws" // registers Factory
 )
 
 func main() {

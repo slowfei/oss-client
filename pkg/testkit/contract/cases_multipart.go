@@ -8,7 +8,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos"
 )
 
 // runMultipartCases enumerates the MultipartService contract cases.

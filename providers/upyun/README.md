@@ -1,11 +1,11 @@
 # providers/upyun
 
-`github.com/maqian/object-storage-client/providers/upyun` — native driver for
+`github.com/maqian/oss-client/providers/upyun` — native driver for
 **Upyun Universal Storage Service (USS)** via [`github.com/upyun/go-sdk/v3/upyun`](https://godoc.org/github.com/upyun/go-sdk/v3/upyun).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/object-storage-client/providers/upyun` |
+| Module path | `github.com/maqian/oss-client/providers/upyun` |
 | Tag | `providers/upyun/v0.1.1` |
 | Vendor SDK | `github.com/upyun/go-sdk/v3 v3.0.4` |
 | Provider id | `"upyun"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/object-storage-client/providers/upyun@providers/upyun/v0.1.1
+go get github.com/maqian/oss-client/providers/upyun@providers/upyun/v0.1.1
 ```
 
 ## Quickstart
@@ -28,10 +28,10 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    upyundrv "github.com/maqian/object-storage-client/providers/upyun"
-    _ "github.com/maqian/object-storage-client/providers/upyun" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    upyundrv "github.com/maqian/oss-client/providers/upyun"
+    _ "github.com/maqian/oss-client/providers/upyun" // registers Factory
 )
 
 func main() {

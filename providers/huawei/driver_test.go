@@ -55,10 +55,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/object-storage-client/pkg/testkit/contract"
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
-	huaweidrv "github.com/maqian/object-storage-client/providers/huawei"
+	"github.com/maqian/oss-client/pkg/testkit/contract"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
+	huaweidrv "github.com/maqian/oss-client/providers/huawei"
 )
 
 // TestRunSuite is the M3 PR-gate entry point. It runs the conformance suite

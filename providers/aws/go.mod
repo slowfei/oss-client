@@ -1,4 +1,4 @@
-module github.com/maqian/object-storage-client/providers/aws
+module github.com/maqian/oss-client/providers/aws
 
 go 1.25.0
 
@@ -7,8 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.15
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.100.0
 	github.com/aws/smithy-go v1.25.1
-	github.com/maqian/object-storage-client v0.1.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
+	github.com/maqian/oss-client v0.1.0
+	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0
 )
 
 require (

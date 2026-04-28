@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
-	"github.com/maqian/object-storage-client/pkg/uos/httpx"
-	"github.com/maqian/object-storage-client/pkg/uos/middleware"
+	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/maqian/oss-client/pkg/uos/httpx"
+	"github.com/maqian/oss-client/pkg/uos/middleware"
 )
 
 // Config is the top-level instantiation parameter passed to

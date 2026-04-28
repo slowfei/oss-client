@@ -1,10 +1,10 @@
-module github.com/maqian/object-storage-client/providers/upyun
+module github.com/maqian/oss-client/providers/upyun
 
 go 1.25.0
 
 require (
-	github.com/maqian/object-storage-client v0.1.0
-	github.com/maqian/object-storage-client/pkg/testkit/contract v0.1.0
+	github.com/maqian/oss-client v0.1.0
+	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0
 	github.com/upyun/go-sdk/v3 v3.0.4
 )
 

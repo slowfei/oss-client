@@ -10,7 +10,7 @@
       "priority": 1,
       "passes": true,
       "acceptanceCriteria": [
-        "providers/qiniu/ scaffolded via scripts/add-provider.sh qiniu (go.mod with module github.com/maqian/object-storage-client/providers/qiniu + parent + testkit requires + replace directives).",
+        "providers/qiniu/ scaffolded via scripts/add-provider.sh qiniu (go.mod with module github.com/maqian/oss-client/providers/qiniu + parent + testkit requires + replace directives).",
         "providers/qiniu/go.mod requires github.com/qiniu/go-sdk/v7 directly; no other cloud SDKs. Pin Go version that the SDK requires.",
         "factory.go implements uos.Factory: Provider() = 'qiniu'; Validate requires DriverConfig with Region (Qiniu zone) OR custom Endpoint, plus CredentialProvider yielding qiniu.Credentials (AccessKey + SecretKey). AuthScheme is AuthCustom; document that Qiniu's Upload Token / Download Token / Manage Token are derived FROM the same AK/SK pair via different signing scopes (no need for distinct credential payloads in v0.1). Open builds the resourcec/storage clients with shared AK/SK; SDK's internal retry disabled if exposed.",
         "driver.go implements full uos.Client + 4 sub-services using qiniu/go-sdk/v7. Use storage.BucketManager for bucket ops, storage.FormUploader / storage.ResumeUploaderV2 for multipart (or whichever vendor primitive maps cleanest onto MultipartService — document the choice). Bypasses pkg/uos/transfer.Manager. Metadata uses x-qn-meta-* on the wire (use s3common.LowerMetadataKeys for case-folding).",

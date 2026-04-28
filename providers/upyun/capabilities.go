@@ -1,6 +1,6 @@
 package upyun
 
-import "github.com/maqian/object-storage-client/pkg/uos/capability"
+import "github.com/maqian/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Upyun USS
 // driver. Cell values mirror docs/provider_matrix.md (the "upyun" column);

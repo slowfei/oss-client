@@ -16,9 +16,9 @@ import (
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/capability"
-	"github.com/maqian/object-storage-client/pkg/uos/s3common"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/maqian/oss-client/pkg/uos/s3common"
 )
 
 // driverImpl is the concrete uos.Client for AWS S3. It holds a

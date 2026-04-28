@@ -11,9 +11,9 @@ import (
 	"github.com/volcengine/ve-tos-golang-sdk/v2/tos"
 	"github.com/volcengine/ve-tos-golang-sdk/v2/tos/enum"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/capability"
-	"github.com/maqian/object-storage-client/pkg/uos/s3common"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/maqian/oss-client/pkg/uos/s3common"
 )
 
 // driverImpl implements pkg/uos.Client by translating to/from

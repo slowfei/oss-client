@@ -95,9 +95,9 @@ Unified:
 
 ```go
 import (
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    _ "github.com/maqian/object-storage-client/providers/aws" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    _ "github.com/maqian/oss-client/providers/aws" // registers Factory
 )
 
 cli, err := uos.DefaultRegistry().Open(ctx, uos.Config{
@@ -259,7 +259,7 @@ and [`examples/direct_grant_upyun/`](../examples/direct_grant_upyun/) (Form).
 
 | Old import | New import (in addition to `pkg/uos`) | Provider id |
 | --- | --- | --- |
-| `github.com/aws/aws-sdk-go-v2/service/s3` | `_ "github.com/maqian/object-storage-client/providers/aws"` | `"aws"` |
+| `github.com/aws/aws-sdk-go-v2/service/s3` | `_ "github.com/maqian/oss-client/providers/aws"` | `"aws"` |
 | `github.com/minio/minio-go/v7` | `_ ".../providers/minio"` | `"minio"` |
 | `github.com/aliyun/aliyun-oss-go-sdk/oss` | `_ ".../providers/alibaba"` | `"alibaba"` |
 | `github.com/tencentyun/cos-go-sdk-v5` | `_ ".../providers/tencent"` | `"tencent"` |
@@ -343,9 +343,9 @@ dispatch by provider id stored in your config:
 
 ```go
 import (
-    _ "github.com/maqian/object-storage-client/providers/aws"
-    _ "github.com/maqian/object-storage-client/providers/minio"
-    _ "github.com/maqian/object-storage-client/providers/qiniu"
+    _ "github.com/maqian/oss-client/providers/aws"
+    _ "github.com/maqian/oss-client/providers/minio"
+    _ "github.com/maqian/oss-client/providers/qiniu"
 )
 
 // One Open call per backend; cache the *Clients in your service:

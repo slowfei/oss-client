@@ -1,11 +1,11 @@
 # providers/qiniu
 
-`github.com/maqian/object-storage-client/providers/qiniu` — native driver for
+`github.com/maqian/oss-client/providers/qiniu` — native driver for
 **Qiniu Cloud Storage (Kodo)** via [`github.com/qiniu/go-sdk/v7`](https://godoc.org/github.com/qiniu/go-sdk/v7).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/object-storage-client/providers/qiniu` |
+| Module path | `github.com/maqian/oss-client/providers/qiniu` |
 | Tag | `providers/qiniu/v0.1.1` |
 | Vendor SDK | `github.com/qiniu/go-sdk/v7 v7.26.10` |
 | Provider id | `"qiniu"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/object-storage-client/providers/qiniu@providers/qiniu/v0.1.1
+go get github.com/maqian/oss-client/providers/qiniu@providers/qiniu/v0.1.1
 ```
 
 ## Quickstart
@@ -28,10 +28,10 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/object-storage-client/pkg/uos"
-    "github.com/maqian/object-storage-client/pkg/uos/credential"
-    qiniudrv "github.com/maqian/object-storage-client/providers/qiniu"
-    _ "github.com/maqian/object-storage-client/providers/qiniu" // registers Factory
+    "github.com/maqian/oss-client/pkg/uos"
+    "github.com/maqian/oss-client/pkg/uos/credential"
+    qiniudrv "github.com/maqian/oss-client/providers/qiniu"
+    _ "github.com/maqian/oss-client/providers/qiniu" // registers Factory
 )
 
 func main() {

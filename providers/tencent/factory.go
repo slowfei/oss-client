@@ -9,8 +9,8 @@ import (
 
 	"github.com/tencentyun/cos-go-sdk-v5"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
 )
 
 // providerID is the canonical Provider id this driver registers under.

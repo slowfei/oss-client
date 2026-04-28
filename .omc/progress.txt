@@ -8,7 +8,7 @@ Scope decision: testkit hoist only (item 2 of the post-M1 actionable list).
   - Item 3 (M2 timing) and item 4 (v0.1.x patch strategy) require user decisions — not in scope.
 
 ## Pre-state snapshot (before any US executes)
-Root go.mod: module `github.com/maqian/object-storage-client`, `go 1.25.0`, ~58 require directives (~50 indirect from testcontainers transitive chain).
+Root go.mod: module `github.com/maqian/oss-client`, `go 1.25.0`, ~58 require directives (~50 indirect from testcontainers transitive chain).
 go.work: `go 1.25.0`, `use ./` only.
 .github/workflows/ci.yml: matrix `os=[ubuntu-latest,macos-latest] go=['1.25']`; vet-fmt/unit-docker/surface jobs all on 1.25.
 AGENTS.md Appendix A item 6: testkit hoist promoted to v0.2.0 mandatory (status = pending).
@@ -29,9 +29,9 @@ US-005 (P5): Docs (CHANGELOG, RELEASING, AGENTS.md A.6) — pending
 US-001 + US-002 + US-003 done in one batch (their work overlaps and was verifiable in a single round-trip):
 
 Hoist mechanics:
-- `cd pkg/testkit/contract && go mod init github.com/maqian/object-storage-client/pkg/testkit/contract`
+- `cd pkg/testkit/contract && go mod init github.com/maqian/oss-client/pkg/testkit/contract`
 - `go work use ./pkg/testkit/contract` (from root)
-- Wrote `pkg/testkit/contract/go.mod` with `go 1.25`, requires for `github.com/maqian/object-storage-client v0.0.0` + `testcontainers-go` v0.42.0 + `testcontainers-go/modules/minio` v0.42.0, plus a `replace github.com/maqian/object-storage-client => ../../..` directive (works alongside go.work; documented for removal at parent-tag time).
+- Wrote `pkg/testkit/contract/go.mod` with `go 1.25`, requires for `github.com/maqian/oss-client v0.0.0` + `testcontainers-go` v0.42.0 + `testcontainers-go/modules/minio` v0.42.0, plus a `replace github.com/maqian/oss-client => ../../..` directive (works alongside go.work; documented for removal at parent-tag time).
 - `cd pkg/testkit/contract && go mod tidy` populated 50+ indirects (the testcontainers/Docker/moby/OTel chain) and bumped testkit's go directive to `1.25.0`.
 - `go mod tidy` from root dropped EVERY require — root is now stdlib-only. `go.sum` is 0 lines.
 

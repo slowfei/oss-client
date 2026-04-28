@@ -39,10 +39,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/object-storage-client/pkg/testkit/contract"
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
-	upyundrv "github.com/maqian/object-storage-client/providers/upyun"
+	"github.com/maqian/oss-client/pkg/testkit/contract"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
+	upyundrv "github.com/maqian/oss-client/providers/upyun"
 )
 
 // TestRunSuite is the M5 PR-gate entry point. It runs the conformance suite

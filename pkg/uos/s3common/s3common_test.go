@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos"
 )
 
 func TestMapCodeString(t *testing.T) {

@@ -13,11 +13,11 @@ versioned and tagged independently. This document defines:
 
 | Module path                                                | Tag prefix                  | Status (v0.1) | Notes |
 | ---------------------------------------------------------- | --------------------------- | ------------- | ----- |
-| `github.com/maqian/object-storage-client`                  | `pkg/uos/`                  | ACTIVE        | Root module. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. |
-| `github.com/maqian/object-storage-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
-| `github.com/maqian/object-storage-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
-| `github.com/maqian/object-storage-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
-| `github.com/maqian/object-storage-client/providers/<name>` | `providers/<name>/`         | PLANNED       | Future provider modules (M3+: alibaba, tencent, huawei, volcengine; M4: gcs, azure; M5: qiniu, upyun). Scaffolded by `scripts/add-provider.sh`. |
+| `github.com/maqian/oss-client`                  | `pkg/uos/`                  | ACTIVE        | Root module. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. |
+| `github.com/maqian/oss-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
+| `github.com/maqian/oss-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
+| `github.com/maqian/oss-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
+| `github.com/maqian/oss-client/providers/<name>` | `providers/<name>/`         | PLANNED       | Future provider modules (M3+: alibaba, tencent, huawei, volcengine; M4: gcs, azure; M5: qiniu, upyun). Scaffolded by `scripts/add-provider.sh`. |
 
 The contract testkit was hoisted out of the root module in v0.1.0
 itself, ahead of its originally-planned slot — see §5.
@@ -103,7 +103,7 @@ release executor (or this checklist) does not run them.
 - [ ] `gofmt -l .` prints nothing (root and testkit); `go vet ./...`
   is clean (both modules).
 - [ ] A maintainer has confirmed the canonical module path
-  `github.com/maqian/object-storage-client` is correct (this is
+  `github.com/maqian/oss-client` is correct (this is
   also baked into all the example imports in `pkg/uos/doc.go` and
   the `replace` directive in `pkg/testkit/contract/go.mod`).
 
@@ -183,8 +183,8 @@ git push origin providers/upyun/v0.1.1
 After tagging, verify both tags are fetchable:
 
 ```bash
-go list -m github.com/maqian/object-storage-client@v0.1.0
-go list -m github.com/maqian/object-storage-client/pkg/testkit/contract@v0.1.0
+go list -m github.com/maqian/oss-client@v0.1.0
+go list -m github.com/maqian/oss-client/pkg/testkit/contract@v0.1.0
 ```
 
 (This validates that Go module proxy can serve the tagged versions.)
@@ -194,7 +194,7 @@ go list -m github.com/maqian/object-storage-client/pkg/testkit/contract@v0.1.0
 - [ ] Open `[Unreleased]` section in CHANGELOG.md for ongoing
   v0.2.0 work.
 - [ ] In `pkg/testkit/contract/go.mod`, replace
-  `github.com/maqian/object-storage-client v0.0.0` with the
+  `github.com/maqian/oss-client v0.0.0` with the
   freshly-tagged version and remove the `replace` directive.
 - [ ] Bump the AGENTS.md Appendix A status table if any items
   graduated from "deferred" to "released."

@@ -20,10 +20,10 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/capability"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
-	"github.com/maqian/object-storage-client/pkg/uos/s3common"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/maqian/oss-client/pkg/uos/s3common"
 )
 
 // readSeekCloser wraps any io.Reader + size into an io.ReadSeekCloser so it

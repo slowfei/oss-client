@@ -3,7 +3,7 @@ package contract
 import (
 	"testing"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos"
 )
 
 // runErrorCases iterates the frozen 14 codes and asserts each one is

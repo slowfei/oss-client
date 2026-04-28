@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos"
 )
 
 // runObjectCases enumerates the ObjectService contract cases. Each

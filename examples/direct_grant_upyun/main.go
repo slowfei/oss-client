@@ -38,12 +38,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/maqian/object-storage-client/pkg/uos"
-	"github.com/maqian/object-storage-client/pkg/uos/credential"
+	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/maqian/oss-client/pkg/uos/credential"
 
 	// Side-effect import registers the Upyun Factory on uos.DefaultRegistry.
-	_ "github.com/maqian/object-storage-client/providers/upyun"
-	upyunprovider "github.com/maqian/object-storage-client/providers/upyun"
+	_ "github.com/maqian/oss-client/providers/upyun"
+	upyunprovider "github.com/maqian/oss-client/providers/upyun"
 )
 
 func main() {
