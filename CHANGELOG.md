@@ -11,6 +11,39 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ### Added
 
+- **`providers/alibaba/v0.1.0`** (M3 first driver, native HMAC against
+  Alibaba OSS via `aliyun-oss-go-sdk` v3): full `pkg/uos.Client`
+  surface (Bucket / Object / Multipart / Signer); presign via OSS
+  HMAC v1/v4 (selectable through `DriverConfig.AuthVersion`); CNAME
+  mode opt-in via `DriverConfig.UseCNAME`; auto path-style for
+  non-`aliyuncs.com` endpoints. `error_map.go` is **132 LoC**
+  (vs AWS's 169 LoC vs minio's 103 LoC) — the s3common extraction
+  validated cleanly against a non-AWS S3-family vendor. The driver
+  bypasses `pkg/uos/transfer.Manager` (same as AWS+MinIO; vendor
+  SDK encodes its own multipart orchestration); the Uploader
+  interface contract pre-tag amendment makes this first-class.
+  Capabilities matrix matches the alibaba column of
+  `docs/provider_matrix.md` (9 ✅ / 1 ❌ / 2 🟡 / 1 🧩 — same shape
+  as AWS+MinIO). `driver_test.go` SKIPs `TestRunSuite` by default
+  (OSS HMAC ≠ AWS SigV4 → cannot authenticate against testcontainers
+  MinIO); cloud-nightly env vars (`OMC_ALIBABA_NIGHTLY_*`) gate the
+  real-OSS contract suite. The `TestSpawnMinIOSmoke` PR-gate test
+  validates testkit wiring.
+- **`pkg/uos/s3common.MapCodeString` extension** — 10 OSS-specific
+  error codes added (gap-fill driven by the alibaba driver's wire
+  surface review):
+  - → `ErrNotFound`: `NoSuchObjectVersion`, `KmsKeyNotFound`
+  - → `ErrConflict`: `BucketVersioningSuspended`,
+    `InvalidEncryptionAlgorithmError`, `RestoreAlreadyInProgress`,
+    `BucketReplicationException`
+  - → `ErrInvalidArgument`: `InvalidLocationConstraint`,
+    `MalformedAclError`, `RequestIsNotMultiPartContent`,
+    `EntityTooSmallError` (the OSS "Error"-suffixed alias of
+    `EntityTooSmall` already in the table)
+  All 10 carry test cases in `s3common_test.go`. Additive — does
+  not affect AWS or MinIO drivers; M3 tencent/huawei/volcengine
+  drivers consume them transparently from day one.
+
 - **`pkg/uos/s3common`** (new public subpackage of `pkg/uos`):
   shared S3-family wire-protocol mappings used by `providers/aws`,
   `providers/minio`, and the future M3+ 国云 drivers

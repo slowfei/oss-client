@@ -37,6 +37,17 @@ func TestMapCodeString(t *testing.T) {
 		{"MissingContentLength", uos.ErrLengthRequired, true},
 		{"InvalidArgument", uos.ErrInvalidArgument, true},
 		{"MalformedXML", uos.ErrInvalidArgument, true},
+		// OSS-specific aliases added during M3 alibaba driver landing.
+		{"NoSuchObjectVersion", uos.ErrNotFound, true},
+		{"KmsKeyNotFound", uos.ErrNotFound, true},
+		{"BucketVersioningSuspended", uos.ErrConflict, true},
+		{"BucketReplicationException", uos.ErrConflict, true},
+		{"RestoreAlreadyInProgress", uos.ErrConflict, true},
+		{"InvalidEncryptionAlgorithmError", uos.ErrConflict, true},
+		{"InvalidLocationConstraint", uos.ErrInvalidArgument, true},
+		{"MalformedAclError", uos.ErrInvalidArgument, true},
+		{"RequestIsNotMultiPartContent", uos.ErrInvalidArgument, true},
+		{"EntityTooSmallError", uos.ErrInvalidArgument, true},
 		// Unknown / empty codes return ok=false and let the caller
 		// fall through to MapHTTPStatus.
 		{"", "", false},

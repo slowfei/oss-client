@@ -60,7 +60,9 @@ func MapCodeString(code string) (uos.Code, bool) {
 	switch code {
 	case "NoSuchKey", "NoSuchBucket", "NoSuchUpload", "NoSuchVersion",
 		"NoSuchBucketPolicy", "NoSuchCORSConfiguration",
-		"NoSuchTagSet", "NotFound", "404":
+		"NoSuchTagSet", "NotFound", "404",
+		// OSS-specific aliases (added during M3 alibaba driver landing).
+		"NoSuchObjectVersion", "KmsKeyNotFound":
 		return uos.ErrNotFound, true
 	case "BucketAlreadyExists", "BucketAlreadyOwnedByYou":
 		return uos.ErrAlreadyExists, true
@@ -74,7 +76,10 @@ func MapCodeString(code string) (uos.Code, bool) {
 	case "PreconditionFailed", "InvalidRange", "NotModified":
 		return uos.ErrPreconditionFailed, true
 	case "BucketNotEmpty", "OperationAborted", "InvalidBucketState",
-		"Conflict":
+		"Conflict",
+		// OSS-specific aliases (added during M3 alibaba driver landing).
+		"BucketVersioningSuspended", "InvalidEncryptionAlgorithmError",
+		"RestoreAlreadyInProgress", "BucketReplicationException":
 		return uos.ErrConflict, true
 	case "SlowDown", "ThrottlingException", "Throttling",
 		"TooManyRequests", "RequestLimitExceeded":
@@ -97,7 +102,13 @@ func MapCodeString(code string) (uos.Code, bool) {
 		"XMinioInvalidObjectName", "APINotSupported",
 		"NotImplemented", "EntityTooLarge", "EntityTooSmall",
 		"KeyTooLongError", "MetadataTooLarge",
-		"RequestTimeTooSkewed":
+		"RequestTimeTooSkewed",
+		// OSS-specific aliases (added during M3 alibaba driver landing).
+		// OSS occasionally appends "Error" suffix to the canonical
+		// codes (EntityTooSmallError) — list both forms so the wire
+		// variant resolves identically.
+		"InvalidLocationConstraint", "MalformedAclError",
+		"RequestIsNotMultiPartContent", "EntityTooSmallError":
 		return uos.ErrInvalidArgument, true
 	}
 	return "", false
