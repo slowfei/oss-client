@@ -1,0 +1,6 @@
+# Local OMC orchestration state.
+# Durable plan/spec artifacts under .omc/plans/ and .omc/specs/ are committed.
+.omc/state/
+.omc/sessions/
+.omc/project-memory.json
+.omc/notepad.md

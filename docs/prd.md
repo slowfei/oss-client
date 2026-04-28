@@ -1,3 +1,5 @@
+> ⚠️ **Reference-only.** v1 architecture is frozen in [`docs/architecture_plan.md`](./architecture_plan.md), which supersedes this file on any conflict. See also [`docs/provider_roadmap.md`](./provider_roadmap.md) and [`docs/provider_matrix.md`](./provider_matrix.md). This PRD remains as background context only.
+
 *REQUIREMENTS & DETAILED DESIGN*
 
 # 通用对象存储客户端
