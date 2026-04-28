@@ -158,6 +158,15 @@ git push origin providers/gcs/v0.1.0
 
 git tag providers/azure/v0.1.0
 git push origin providers/azure/v0.1.0
+
+# Tag M5 provider modules (the DirectGrant non-URL milestone — qiniu
+# uses Upload Token (Mode=Token), upyun uses FORM authorization
+# (Mode=Form). Same replace-cleanup-per-commit pattern as M2/M3/M4.
+git tag providers/qiniu/v0.1.0
+git push origin providers/qiniu/v0.1.0
+
+git tag providers/upyun/v0.1.0
+git push origin providers/upyun/v0.1.0
 ```
 
 After tagging, verify both tags are fetchable:

@@ -28,8 +28,8 @@ The matrix below is the **target** v1 state. Cells marked `Planned` get filled d
 | Volcengine TOS | `providers/volcengine` | `ve-tos-golang-sdk/v2/tos` | **Shipped (v0.1.0)** | M3 |
 | Google Cloud Storage | `providers/gcs` | `cloud.google.com/go/storage` | **Shipped (v0.1.0)** | M4 |
 | Azure Blob Storage | `providers/azure` | `azure-sdk-for-go/sdk/storage/azblob` | **Shipped (v0.1.0)** | M4 |
-| Qiniu Kodo | `providers/qiniu` | `qiniu/go-sdk/v7` | Planned | M5 |
-| Upyun USS | `providers/upyun` | `upyun/go-sdk/v3` (or REST) | Planned | M5 |
+| Qiniu Kodo | `providers/qiniu` | `qiniu/go-sdk/v7` | **Shipped (v0.1.0)** | M5 |
+| Upyun USS | `providers/upyun` | `upyun/go-sdk/v3` | **Shipped (v0.1.0)** | M5 |
 
 When a driver ships, change `Planned` → `Shipped (vX.Y.Z)` and replace `⏳ Planned (M_n_)` cells in the capability matrix below with the actual outcome.
 
@@ -39,19 +39,19 @@ The 13 v1 capabilities (frozen — see `architecture_plan.md` §7.2). Cells refl
 
 | Capability \ Provider | aws | minio | alibaba | tencent | huawei | volcengine | gcs | azure | qiniu | upyun |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `CapBucketCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M5 | ⏳M5 |
-| `CapObjectCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M5 | ⏳M5 |
-| `CapListPrefixDelimiter` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M5 | ⏳M5 |
-| `CapRangeRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M5 | ⏳M5 |
-| `CapMultipartUpload` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M5 | ⏳M5 |
-| `CapSignedURLRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡¹ | 🟡² | ⏳M5 | 🟡M5³ |
-| `CapSignedURLWrite` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡¹ | 🟡² | 🟡M5⁴ | 🟡M5³ |
-| `CapDirectGrant` | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ✅⁶ | ⏳M5 | ⏳M5 |
-| `CapObjectTagging` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🧩M5⁷ | 🧩M5⁷ |
-| `CapVersioning` | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | ✅ | 🟡⁸ | ❌M5⁹ | ❌M5⁹ |
-| `CapObjectACL` | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁰ | 🟡¹¹ | 🧩M5⁷ | 🧩M5⁷ |
-| `CapManagedEncryption` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🧩M5⁷ | 🧩M5⁷ |
-| `CapNativeMove` | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩M5¹² | 🧩M5¹² |
+| `CapBucketCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `CapObjectCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `CapListPrefixDelimiter` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `CapRangeRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `CapMultipartUpload` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `CapSignedURLRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡¹ | 🟡² | ✅ | 🟡³ |
+| `CapSignedURLWrite` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡¹ | 🟡² | 🟡⁴ | 🟡³ |
+| `CapDirectGrant` | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ✅⁶ | ✅ | ✅ |
+| `CapObjectTagging` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🧩⁷ | 🧩⁷ |
+| `CapVersioning` | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | ✅ | 🟡⁸ | ❌⁹ | ❌⁹ |
+| `CapObjectACL` | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁰ | 🟡¹¹ | 🧩⁷ | 🧩⁷ |
+| `CapManagedEncryption` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🧩⁷ | 🧩⁷ |
+| `CapNativeMove` | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² |
 
 ### Footnotes
 

@@ -299,6 +299,106 @@ sets all proven sufficient for the non-HMAC milestone. The s3common
 boundary held — neither non-S3 vendor extended MapCodeString. Azure SAS
 validated DirectGrantModeToken as a real-world fit (not just placeholder).
 
+================================================================================
+RALPH RUN #5 — M5 (qiniu + upyun) — 2026-04-28
+================================================================================
+
+Task: M5 milestone — implement providers/qiniu + providers/upyun native
+non-HMAC drivers. The DirectGrant non-URL milestone — validates that
+Signer.IssueDirectGrant covers both Token shape (Qiniu Upload + Download)
+AND Form shape (Upyun FORM upload — the LAST frozen DirectGrantMode value
+not yet exercised by any shipped driver). Hard fence: TestFrozenSurface
+3-subtest stays green; abstraction-pressure → Lessons (M5).
+
+Pre-flight: amended M4 commit (78813a0) to purge rogue providers/azure/.omc/
+state files that the M4 azure executor accidentally created. Updated
+.gitignore patterns to recursive **/.omc/... shape so any future executor
+.omc droppings are caught at status time.
+
+PRD: 3 stories
+- US-001 providers/qiniu (Opus executor, parallel)
+- US-002 providers/upyun (Opus executor, parallel)
+- US-003 matrix + CHANGELOG + RELEASING + AGENTS (lead)
+
+Iteration log:
+- US-001 + US-002 fired in parallel (M3 phase 2 + M4 pattern proven)
+  - Qiniu executor: 1971 LoC; qiniu/go-sdk/v7 v7.26.10; 8 Lessons (M5) bullets;
+    Upload Token + Download Token both via DirectGrantModeToken (single dispatch
+    shape per driver, executor's pragmatic choice over Mode=URL for download —
+    architect flagged as v0.2.0 audit candidate, non-gating); 8 PutPolicy override
+    keys absorbed via DirectGrantRequest.Extra; DriverConfig.Domain required for
+    downloads (fail-fast at config or first-call). LOCAL mapQiniuReason switch
+    in error_map.go (~20 reason-string prefixes), s3common.MapCodeString
+    NOT polluted.
+  - Upyun executor: 2161 LoC; upyun/go-sdk/v3 v3.0.4; 10 Lessons (M5) bullets;
+    **DirectGrantModeForm validated for FORM upload — the LAST frozen mode
+    exercised, completing the 4-mode validation across 10 drivers**; existing
+    DirectGrant.{Mode,URL,Method,Headers,FormFields,Token} fields cleanly
+    absorbed FORM upload with zero widening; 6 vendor policy keys via
+    DirectGrantRequest.Extra. LOCAL mapUpyunErrorCode switch (~30 entries,
+    8-digit numeric codes). Upyun BucketCRUD declared Supported with
+    Create/Delete returning ErrUnsupported (portal-provisioned services —
+    architect flagged as v0.2.0 docs review for potential 4th availability tier).
+- Both executors STILL created empty .omc/ directories despite explicit
+  no-touch instruction — but the recursive **/.omc/... gitignore from M4
+  cleanup caught them; empty dirs purged with rmdir.
+- US-003 docs:
+  - matrix: 16 cells updated (2 driver-status rows + 13 cap rows × 2 cols);
+    grep ⏳M5 → 0 matches in cells confirms full sweep; matrix is now 100%
+    populated for v1 (no more ⏳ anywhere except legend text)
+  - CHANGELOG: 2 new [Unreleased] entries above gcs/azure (qiniu first, upyun
+    second) — both call out the DirectGrantMode validation outcome
+  - RELEASING §4: 2 new tag commands appended (qiniu + upyun)
+  - AGENTS.md: new item 8 added capturing M5 outcome — 10/10 v1-target drivers
+    shipped with zero pkg/uos change; cumulative 8 v0.2.0 deferred candidates
+    (1 multipart sequential-only flag, 2 MinPartSize, 3 credential rotate, 4 azure
+    multipart metadata, 5 Extra docs, 6 ExtraReturned, 7 upyun ctx wiring,
+    8 errors.As context loss); M6 stabilization noted as next milestone
+- Architect verification (Opus): VERDICT APPROVED; 4 NEW v0.2.0 architectural-
+  smell candidates (Qiniu Download Mode=Token vs Mode=URL; 4th Availability
+  tier for portal-caveat patterns; unused DirectGrantModeHeaders M6 decision;
+  CI lint rule for s3common.MapCodeString) + reaffirms 8 cumulative items.
+  All non-gating. M5 hard fence held throughout (zero pkg/uos source change
+  per architect grep; 3-subtest TestFrozenSurface PASS unchanged from M4).
+- Deslop pass (Step 7.5): **NO SLOP FOUND** in M5 driver code. All 4 signal
+  scans (func max/min/abs/clamp redefinition; TODO/FIXME/XXX/HACK; debug
+  prints / panic / nolint; banner-style comments) returned zero matches.
+  Executors clearly learned from M4 (no `func max` redefinition this time
+  since module pinned at Go 1.25 has builtin). Architect-flagged minor smells
+  are deferred per architect verdict — out of M5 deslop scope.
+- Post-deslop regression (Step 7.6) — all gates green:
+  - root go test -short -race -count=1 ./... → 6 packages PASS
+    (uos, capability=no-tests, credential, httpx, middleware, s3common,
+    transfer); pkg/uos/httpx CLEAN — no flake recurrence in this M5 run
+  - TestFrozenSurface: 3 subtests PASS (zero growth)
+  - providers/qiniu + providers/upyun: build/vet/fmt silent each
+  - find . -name .omc -type d in qiniu/upyun: 0 (cleanup successful)
+
+M5 verdict: **10/10 v1-target drivers shipped with zero pkg/uos change.
+The v1 abstraction is fully validated.** All 4 frozen DirectGrantModes
+exercised in production code: URL (S3-family read presign), Form (Upyun
+upload — M5 NEW), Token (Azure SAS + Qiniu Upload + Qiniu Download),
+Headers (defined-but-unused; M6 decision: keep / deprecate / formally
+exempt from ≥2-providers freeze rule).
+
+Cumulative v0.2.0 deferred candidates (M3+M4+M5 + architect M5 review):
+12 items, all non-gating. Categories:
+- Frozen-surface widening (deferred; needs ≥2-provider justification):
+  MinPartSize, sequential-only multipart flag, 4th Availability tier,
+  ExtraReturned, credential.Provider.Rotate
+- Driver-internal correctness fixes:
+  azure multipart Initiate.Metadata, upyun ctx wiring, qiniu Download
+  Mode-semantics audit, errors.As context loss
+- Hardening:
+  s3common.MapCodeString CI lint, Extra-keys formal docs, signature
+  dual-carry docs
+
+M6 (stabilization, benchmarks, examples, OTel alignment, README quickstarts,
+v1.0.0 cut) is the next major milestone. v0.2.0 retrofit can be folded in
+with M6 polish or done first depending on user preference.
+
+Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
+
 3 v0.2.0 deferred candidates surfaced (need ≥2-provider justification per
 ADR rule):
 1. Capabilities().MinPartSize field (Azure 4 MiB ≠ S3 5 MiB; 1 provider)

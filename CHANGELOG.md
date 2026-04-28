@@ -11,6 +11,114 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ### Added
 
+- **`providers/qiniu/v0.1.0`** (M5, native non-HMAC driver against
+  Qiniu Kodo via `github.com/qiniu/go-sdk/v7 v7.26.10`): full
+  `pkg/uos.Client` surface (Bucket / Object / Multipart / Signer).
+  `AuthCustom` only — Qiniu's Upload Token / Download Token / Manage
+  Token are derived from the same AK/SK pair via different signing
+  scopes, so a single `qiniu.Credentials` payload absorbs all three
+  via the existing `credential.Credential.Opaque any` escape hatch
+  (no `pkg/uos/credential` change). Object plane uses
+  `storage.FormUploader.Put` for small objects;
+  `storage.BucketManager.Stat/Delete/Copy/ListFiles` for object ops;
+  HTTP GET against `storage.MakePrivateURL(domain, key, deadline)`
+  for downloads (requires `DriverConfig.Domain` — fail-fast at
+  config or first-call when missing). Multipart maps onto
+  `storage.ResumeUploaderV2.InitParts/UploadParts/CompleteParts`
+  with in-process session tracking (Qiniu RUv2 returns server-side
+  uploadId; sessions kept in-process for `Abort` lifecycle and
+  block-list tracking). Bypasses `pkg/uos/transfer.Manager`.
+  `Signer.SignURL` (read) via `MakePrivateURL`; `SignURL` (write)
+  returns `*uos.Error{Code: ErrUnsupported, Capability:
+  CapSignedURLWrite, Reason: "qiniu write authorization is
+  non-URL; use IssueDirectGrant"}` per matrix footnote 4.
+  **`Signer.IssueDirectGrant` validates DirectGrantModeToken in a
+  NEW context** — for `req.Operation==DirectGrantUpload`, builds
+  the Upload Token via `storage.PutPolicy{Scope, Expires, FsizeLimit,
+  MimeLimit, ...}.UploadToken(creds)` and returns
+  `*uos.DirectGrant{Mode: DirectGrantModeToken, Token: <upload-token>,
+  URL: <upload-host>, Method: "POST"}`. 8 vendor-specific PutPolicy
+  override keys recognized via `req.Extra` (`callbackUrl`,
+  `callbackBody`, `callbackHost`, `callbackBodyType`, `returnBody`,
+  `returnUrl`, `saveKey`, `persistentOps`). For
+  `req.Operation==DirectGrantDownload`, returns Download Token (signed
+  URL embedded as Token field) — also `Mode: DirectGrantModeToken`,
+  pragmatic encoding choice that keeps both upload + download under
+  one dispatch shape. The frozen 4-mode set was sufficient — no new
+  mode needed; this is the SECOND validation of `DirectGrantModeToken`
+  after Azure SAS (M4), confirming the mode is the right dispatch
+  axis for opaque-bearer auth shapes. `error_map.go` houses a LOCAL
+  `mapQiniuReason` switch (~20 reason-string prefixes/contains
+  matched against `*qclient.ErrorInfo` HTTP-style errors and SDK
+  sentinels `ErrBucketNotExist`/`ErrNoSuchFile`); `s3common.MapCodeString`
+  deliberately NOT extended (Qiniu is non-S3-family). Test:
+  `TestRunSuite` SKIPs by default (Qiniu wire dialect ≠ MinIO S3
+  SigV4); cloud-nightly env vars `OMC_QINIU_NIGHTLY_KEY`/`_SECRET`/
+  `_BUCKET`/`_ZONE` (+ optional `_DOMAIN`) gate the real-Qiniu
+  contract; 6 SkipCases registered (versioning, acl,
+  sign_url_write, issue_direct_grant_shape, multipart_resume,
+  multipart_list).
+
+- **`providers/upyun/v0.1.0`** (M5, native non-HMAC driver against
+  Upyun USS via `github.com/upyun/go-sdk/v3 v3.0.4`): full
+  `pkg/uos.Client` surface. `AuthCustom` default (signature auth
+  preferred); `AuthSharedKey` accepted as basic-auth fallback
+  (documented as discouraged for security and rate-limit reasons).
+  `DriverConfig.Bucket` is Upyun's "service name" (1:1 mapping to
+  unified Bucket — Upyun has no concept of "create bucket" since
+  services are portal-provisioned: `BucketService.Create/Delete`
+  return `ErrUnsupported{CapBucketCRUD}` cleanly). Object plane uses
+  upyun SDK's `Get`/`Put`/`Delete`/`Mkdir`/`List`. Multipart maps
+  onto upyun's chunked-upload via `X-Upyun-Multi-*` headers
+  (resumable upload with 0-based `Part-Id` translated to/from
+  `pkg/uos.PartNumber` 1-based at the boundary). Bypasses
+  `pkg/uos/transfer.Manager`. Metadata: `x-upyun-meta-*` on the wire
+  via `s3common.LowerMetadataKeys` for case-folding. `Signer.SignURL`
+  (download) issues URL-shaped signed download via Upyun signature
+  mechanism (`_upt=<expiration>/<full-path>/<signature>` query
+  params per matrix footnote 3); `SignURL` (write) returns
+  `*uos.Error{Code: ErrUnsupported, Capability: CapSignedURLWrite,
+  Reason: "upyun upload authorization is FORM-based; use
+  IssueDirectGrant"}`. **`Signer.IssueDirectGrant` validates the
+  LAST frozen DirectGrantMode value: `DirectGrantModeForm`** — for
+  `req.Operation==DirectGrantUpload`, builds the Upyun FORM
+  authorization (policy JSON with bucket / save-key / expiration /
+  optional content-length-range / optional notify-url from
+  `req.Extra["notify-url"]`, base64-encoded; HMAC signature over
+  policy + operator) and returns:
+    - `Mode: DirectGrantModeForm`
+    - `URL: https://v0.api.upyun.com/<bucket>`
+    - `Method: "POST"`
+    - `Headers: {Authorization: "UPYUN <op>:<sig>"}` (carried for
+      callers preferring header-form auth)
+    - `FormFields: {policy, authorization, optional content-md5,
+      optional x-upyun-meta-*}`
+    - `Token: ""` (not used for Form mode)
+  6 vendor-specific policy keys recognized via `req.Extra`
+  (`notify-url`, `apps`, `expiration-override`, `save-key`,
+  `content-md5`, `allow-file-type`). For
+  `req.Operation==DirectGrantDownload`, returns
+  `*uos.Error{Code: ErrUnsupported, Capability: CapDirectGrant,
+  Reason: "upyun download authorization is URL-based; use SignURL"}`
+  — Upyun supports mixed Signer dispatch (download URL via SignURL,
+  upload Form via IssueDirectGrant). **The existing DirectGrant
+  struct fields (Mode/URL/Method/Headers/FormFields/Token) cleanly
+  absorbed Upyun FORM upload with zero widening**; this completes
+  the 4-mode frozen-set validation: URL (S3-family read presign) /
+  Form (Upyun upload) / Token (Azure SAS, Qiniu upload+download) /
+  Headers (still unused but available — future vendor candidate).
+  `error_map.go` houses a LOCAL `mapUpyunErrorCode` switch
+  (~30 entries on Upyun's 8-digit numeric codes, e.g.
+  `40400000+ "file or directory not found"` → `ErrNotFound`,
+  `40300000+ "username password error"` → `ErrUnauthenticated`);
+  `s3common.MapCodeString` deliberately NOT extended. SDK
+  context-cancellation is best-effort (upyun SDK doesn't accept
+  `context.Context`; driver wraps every call in goroutine + select);
+  v0.2.0 candidate to wire SDK to context-aware http.Client. Test:
+  `TestRunSuite` SKIPs by default; cloud-nightly env vars
+  `OMC_UPYUN_NIGHTLY_BUCKET`/`_OPERATOR`/`_PASSWORD` gate
+  real-Upyun contract.
+
 - **`providers/gcs/v0.1.0`** (M4, native non-HMAC driver against
   Google Cloud Storage via `cloud.google.com/go/storage v1.62.1`):
   full `pkg/uos.Client` surface (Bucket / Object / Multipart /

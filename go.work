@@ -9,6 +9,8 @@ use (
 	./providers/gcs
 	./providers/huawei
 	./providers/minio
+	./providers/qiniu
 	./providers/tencent
+	./providers/upyun
 	./providers/volcengine
 )
