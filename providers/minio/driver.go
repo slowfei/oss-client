@@ -13,6 +13,7 @@ import (
 
 	"github.com/maqian/object-storage-client/pkg/uos"
 	"github.com/maqian/object-storage-client/pkg/uos/capability"
+	"github.com/maqian/object-storage-client/pkg/uos/s3common"
 )
 
 // driverImpl implements pkg/uos.Client by translating to/from
@@ -804,17 +805,12 @@ func extractUserMetadata(h http.Header, server miniogo.StringMap) uos.Metadata {
 	return out
 }
 
-// toLowerMap returns a copy of m with keys lower-cased. Returns nil for
-// nil input so minio-go's options keep their "no metadata" behavior.
+// toLowerMap returns a copy of m with keys lower-cased. Returns nil
+// for nil/empty input so minio-go's options keep their "no metadata"
+// behaviour. Thin adapter over s3common.LowerMetadataKeys (kept as a
+// named helper so existing call sites do not need updating).
 func toLowerMap(m uos.Metadata) map[string]string {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(map[string]string, len(m))
-	for k, v := range m {
-		out[strings.ToLower(k)] = v
-	}
-	return out
+	return s3common.LowerMetadataKeys(m)
 }
 
 // orDefault returns s when non-empty, fallback otherwise. Used to fill

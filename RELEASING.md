@@ -196,19 +196,31 @@ M2 surfaced the answer to two more Follow-ups:
   `Uploader` via a `transfer.Manager`-backed wrapper in their own
   provider package without contorting their request shapes into the
   unified `MultipartService` API.
-- **Follow-up #4 — `s3common` extraction**: planned for "M3+ once
-  two S3-family drivers have shipped." With AWS + MinIO landed,
-  the common surface area is now visible. Candidate extraction
-  targets identified by both M2 driver authors:
-  - Pointer-flatten helpers (`ptrIfNotEmpty`, `ptr32`, `ptr64`,
-    `ptrBool`, `deref`).
-  - Range header formatting (`bytes=START-END`).
-  - Metadata case-folding (lower-case in both directions).
-  - Delete batching threshold (1000 keys per call).
-  - Standard error-code → `pkg/uos.Code` table for S3-compatible
-    error responses (the wire-level codes are identical across
-    S3-family; only the typed-error wrappers differ per SDK).
-  Defer the actual extraction to M3 once Alibaba/Tencent/Huawei/
-  Volcengine raise the duplication count past two.
+- **Follow-up #4 — `s3common` extraction — RESOLVED in pre-tag
+  refactor**: originally planned for "M3+ once two S3-family
+  drivers have shipped"; the M2 architect review recommended
+  pulling it forward to the FIRST M3 driver landing rather than
+  waiting for the second. We ultimately did the extraction
+  pre-tag, while only AWS + MinIO were shipped, because the
+  duplication surface was already visible and the cost of doing
+  it later (4 国云 drivers also paying the duplication tax) was
+  larger than the value of waiting.
+
+  What landed in `pkg/uos/s3common`:
+  - `MapCodeString` — S3-compat wire code string → `uos.Code`.
+  - `MapHTTPStatus` — HTTP status fallback table.
+  - `MapContextErr` — `context.Canceled`/`DeadlineExceeded`
+    → `uos.ErrTimeout`.
+  - `IsRetryable` — marks the three retryable Codes.
+  - `LowerMetadataKeys` — metadata key case-folding (with
+    nil/empty collapse).
+
+  What did NOT extract: the architect's review listed five
+  candidates including pointer-flatten helpers and HTTP Range
+  header formatting. Hands-on inspection of providers/aws +
+  providers/minio showed only 3 of the 5 were actually
+  duplicated — pointer helpers and `formatRange` are AWS-only
+  (MinIO uses native typed APIs). Re-evaluate if M3+ vendors
+  surface the same duplication.
 
 All other Follow-ups remain at the priority captured in the ADR.

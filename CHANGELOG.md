@@ -9,7 +9,57 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ## [Unreleased]
 
-(Nothing pending. Next entries belong here when M3 work begins — Alibaba / Tencent / Huawei / Volcengine native drivers per `docs/provider_roadmap.md`.)
+### Added
+
+- **`pkg/uos/s3common`** (new public subpackage of `pkg/uos`):
+  shared S3-family wire-protocol mappings used by `providers/aws`,
+  `providers/minio`, and the future M3+ 国云 drivers
+  (alibaba/tencent/huawei/volcengine). Five exported helpers, all
+  stdlib-only:
+  - `MapCodeString(code) (uos.Code, bool)` — S3-compat error code
+    string → `uos.Code` table covering every wire code that
+    resolves to one of the 14 frozen `pkg/uos.Code` values.
+  - `MapHTTPStatus(status) (uos.Code, bool)` — HTTP status fallback
+    when the vendor didn't supply a recognised code string.
+  - `MapContextErr(err) (uos.Code, bool)` — context cancellation /
+    deadline → `uos.ErrTimeout`.
+  - `IsRetryable(code) bool` — marks the three retryable Codes
+    (`RateLimited` / `Timeout` / `Temporary`).
+  - `LowerMetadataKeys(m) map[string]string` — case-folds metadata
+    map keys; collapses nil and empty to nil so vendor SDKs see
+    "no metadata" rather than "explicit empty".
+  All five carry table-driven tests (`s3common_test.go`).
+
+### Changed
+
+- **`providers/aws/error_map.go`** (240 → 169 LoC, ~30 % shrink):
+  generic `smithy.APIError` code dispatch + HTTP-status fallback +
+  context cancellation handling now delegate to `s3common`. The
+  vendor-typed-error switch (e.g. `*types.NoSuchKey`) stays inline
+  because `aws-sdk-go-v2` typed shapes carry richer message text
+  than the wire-level code string.
+- **`providers/minio/error_map.go`** (185 → 103 LoC, ~45 % shrink):
+  the entire `mapErrorCode` body collapses into a 4-line decision
+  tree over `s3common.MapCodeString` → `MapHTTPStatus` →
+  `MapContextErr` → `uos.ErrInternal` catch-all. `miniogo`'s
+  package-level constants (`miniogo.NoSuchKey`, etc.) are
+  string-typed so `s3common.MapCodeString(string(resp.Code))`
+  resolves them transparently.
+- **`providers/{aws,minio}/driver.go`** metadata case-folding:
+  `metadataToAWS` / `metadataFromAWS` / `toLowerMap` are now thin
+  one-line adapters over `s3common.LowerMetadataKeys`. Behaviour
+  unchanged (nil and empty input still collapse to nil; mixed-case
+  keys still fold to lower-case).
+
+### Resolved
+
+- **ADR Follow-up #4 — s3common extraction**: originally planned
+  for "M3+ once two S3-family drivers have shipped." Architect's
+  M2 review recommended extracting at the FIRST M3 driver landing
+  (i.e. ahead of Alibaba/Tencent) rather than waiting for the
+  second. Extraction is now landed pre-tag with the existing M2
+  duplication as the proof; M3 drivers consume the shared helpers
+  from day one rather than duplicating the wire-level mappings.
 
 ## [providers/aws/v0.1.0] — 2026-04-28 — M2 (AWS native driver)
 

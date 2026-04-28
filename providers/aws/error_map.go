@@ -3,25 +3,29 @@ package aws
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 
 	"github.com/maqian/object-storage-client/pkg/uos"
+	"github.com/maqian/object-storage-client/pkg/uos/s3common"
 )
 
 // mapError translates an aws-sdk-go-v2 error into a *uos.Error per
 // architecture_plan §7.1 (the 14 frozen Code values). It handles:
 //
 //   - typed S3 *types.* error shapes (NoSuchKey, NoSuchBucket, ...)
-//   - generic smithy.APIError code dispatch (AccessDenied, SlowDown, ...)
-//   - awshttp.ResponseError for HTTP status fall-through (5xx → Temporary)
-//   - context cancellation (Timeout / Internal)
+//   - generic smithy.APIError code dispatch (delegated to
+//     pkg/uos/s3common.MapCodeString — shared across all S3-family
+//     drivers).
+//   - awshttp.ResponseError for HTTP status fall-through (delegated
+//     to pkg/uos/s3common.MapHTTPStatus).
+//   - context cancellation / deadline (delegated to
+//     pkg/uos/s3common.MapContextErr).
 //
-// Unmapped errors fall through to ErrInternal with a populated Cause so
-// errors.Unwrap callers still see the original. RequestID and
+// Unmapped errors fall through to ErrInternal with a populated Cause
+// so errors.Unwrap callers still see the original. RequestID and
 // SecondaryID (extended request id) are populated whenever the AWS
 // response carries them.
 //
@@ -40,26 +44,28 @@ func mapError(op, bucket, key string, err error) error {
 		Cause:     err,
 	}
 
-	// Context cancellation / deadline.
-	if errors.Is(err, context.Canceled) {
-		out.Code = uos.ErrTimeout
-		out.Retryable = false
-		return out
-	}
-	if errors.Is(err, context.DeadlineExceeded) {
-		out.Code = uos.ErrTimeout
-		out.Retryable = true
+	// Context cancellation / deadline (cheapest check first; ambient
+	// ctx errors typically fire before any vendor-side classification
+	// matters). Distinguish Canceled (caller intent — do NOT retry)
+	// from DeadlineExceeded (transient — DO retry).
+	if code, ok := s3common.MapContextErr(err); ok {
+		out.Code = code
+		out.Retryable = errors.Is(err, context.DeadlineExceeded)
 		return out
 	}
 
-	// HTTP-level metadata: RequestID, SecondaryID, status.
+	// HTTP-level metadata: RequestID, SecondaryID, status. Capture
+	// before classification so that fall-through paths can still use
+	// them.
 	var respErr *awshttp.ResponseError
 	if errors.As(err, &respErr) {
 		out.HTTPStatus = respErr.HTTPStatusCode()
 		out.RequestID = respErr.ServiceRequestID()
 	}
 
-	// Typed S3 errors (most precise match wins).
+	// Typed S3 errors (most precise match wins). These vendor-typed
+	// shapes carry richer context than the wire-level code string;
+	// keep them inline so message text stays vendor-flavoured.
 	switch typed := err.(type) {
 	case *types.NoSuchKey:
 		out.Code = uos.ErrNotFound
@@ -123,8 +129,9 @@ func mapError(op, bucket, key string, err error) error {
 		return out
 	}
 
-	// Generic smithy.APIError code dispatch — covers many error codes
-	// MinIO and AWS return that don't have a typed wrapper class.
+	// Generic smithy.APIError code dispatch via the shared S3-compat
+	// table. Covers the codes MinIO and AWS both emit for error
+	// shapes that don't have a typed wrapper class.
 	var apiErr smithy.APIError
 	if errors.As(err, &apiErr) {
 		code := apiErr.ErrorCode()
@@ -133,98 +140,20 @@ func mapError(op, bucket, key string, err error) error {
 		} else {
 			out.Message = code
 		}
-		switch code {
-		case "NoSuchKey", "NoSuchBucket", "NoSuchUpload", "NotFound", "404":
-			out.Code = uos.ErrNotFound
-		case "BucketAlreadyExists", "BucketAlreadyOwnedByYou":
-			out.Code = uos.ErrAlreadyExists
-		case "AccessDenied", "AllAccessDisabled", "Forbidden":
-			out.Code = uos.ErrPermissionDenied
-		case "InvalidAccessKeyId", "SignatureDoesNotMatch",
-			"InvalidSecurity", "ExpiredToken", "InvalidToken",
-			"AuthorizationHeaderMalformed", "MissingSecurityHeader":
-			out.Code = uos.ErrUnauthenticated
-		case "PreconditionFailed", "InvalidRange", "NotModified":
-			out.Code = uos.ErrPreconditionFailed
-		case "BucketNotEmpty":
-			out.Code = uos.ErrConflict
-		case "OperationAborted", "InvalidBucketState":
-			out.Code = uos.ErrConflict
-		case "SlowDown", "ThrottlingException", "Throttling",
-			"TooManyRequests", "RequestLimitExceeded":
-			out.Code = uos.ErrRateLimited
-			out.Retryable = true
-		case "RequestTimeout", "RequestTimeoutException":
-			out.Code = uos.ErrTimeout
-			out.Retryable = true
-		case "ServiceUnavailable", "InternalError", "InternalFailure":
-			out.Code = uos.ErrTemporary
-			out.Retryable = true
-		case "BadDigest", "InvalidDigest", "XAmzContentSHA256Mismatch":
-			out.Code = uos.ErrChecksumMismatch
-		case "MissingContentLength":
-			out.Code = uos.ErrLengthRequired
-		case "InvalidArgument", "MalformedXML", "InvalidBucketName",
-			"InvalidObjectName", "EntityTooLarge", "EntityTooSmall",
-			"KeyTooLongError", "MetadataTooLarge":
-			out.Code = uos.ErrInvalidArgument
-		default:
-			// Status-based fallback for unknown codes.
-			if respErr != nil {
-				switch s := respErr.HTTPStatusCode(); {
-				case s == http.StatusNotFound:
-					out.Code = uos.ErrNotFound
-				case s == http.StatusForbidden:
-					out.Code = uos.ErrPermissionDenied
-				case s == http.StatusUnauthorized:
-					out.Code = uos.ErrUnauthenticated
-				case s == http.StatusPreconditionFailed:
-					out.Code = uos.ErrPreconditionFailed
-				case s == http.StatusConflict:
-					out.Code = uos.ErrConflict
-				case s == http.StatusTooManyRequests:
-					out.Code = uos.ErrRateLimited
-					out.Retryable = true
-				case s == http.StatusRequestTimeout:
-					out.Code = uos.ErrTimeout
-					out.Retryable = true
-				case s == http.StatusLengthRequired:
-					out.Code = uos.ErrLengthRequired
-				case s >= 500 && s < 600:
-					out.Code = uos.ErrTemporary
-					out.Retryable = true
-				case s >= 400 && s < 500:
-					out.Code = uos.ErrInvalidArgument
-				}
-			}
+		if mapped, ok := s3common.MapCodeString(code); ok {
+			out.Code = mapped
+			out.Retryable = s3common.IsRetryable(mapped)
+			return out
 		}
-		return out
+		// Unknown code string — fall through to status-based mapping.
 	}
 
-	// Pure HTTP fallback (no APIError wrapper, but a ResponseError exists).
+	// HTTP-status fallback (catches both APIError-but-unknown-code
+	// and pure-HTTP errors with no APIError wrapper).
 	if respErr != nil {
-		switch s := respErr.HTTPStatusCode(); {
-		case s == http.StatusNotFound:
-			out.Code = uos.ErrNotFound
-		case s == http.StatusForbidden:
-			out.Code = uos.ErrPermissionDenied
-		case s == http.StatusUnauthorized:
-			out.Code = uos.ErrUnauthenticated
-		case s == http.StatusPreconditionFailed:
-			out.Code = uos.ErrPreconditionFailed
-		case s == http.StatusConflict:
-			out.Code = uos.ErrConflict
-		case s == http.StatusTooManyRequests:
-			out.Code = uos.ErrRateLimited
-			out.Retryable = true
-		case s == http.StatusRequestTimeout:
-			out.Code = uos.ErrTimeout
-			out.Retryable = true
-		case s == http.StatusLengthRequired:
-			out.Code = uos.ErrLengthRequired
-		case s >= 500 && s < 600:
-			out.Code = uos.ErrTemporary
-			out.Retryable = true
+		if mapped, ok := s3common.MapHTTPStatus(respErr.HTTPStatusCode()); ok {
+			out.Code = mapped
+			out.Retryable = s3common.IsRetryable(mapped)
 		}
 	}
 	return out

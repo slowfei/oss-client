@@ -18,6 +18,7 @@ import (
 
 	"github.com/maqian/object-storage-client/pkg/uos"
 	"github.com/maqian/object-storage-client/pkg/uos/capability"
+	"github.com/maqian/object-storage-client/pkg/uos/s3common"
 )
 
 // driverImpl is the concrete uos.Client for AWS S3. It holds a
@@ -833,27 +834,15 @@ func deref(p *string) string {
 // Drivers MUST lower-case keys per request.go contract; AWS S3 lower-
 // cases on the wire too, so the round-trip is well-defined.
 func metadataToAWS(m uos.Metadata) map[string]string {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(map[string]string, len(m))
-	for k, v := range m {
-		out[strings.ToLower(k)] = v
-	}
-	return out
+	return s3common.LowerMetadataKeys(m)
 }
 
 // metadataFromAWS converts the SDK's map[string]string back to
-// uos.Metadata, lower-casing keys defensively.
+// uos.Metadata, lower-casing keys defensively. Delegates the
+// case-folding to s3common; the type cast keeps the unified
+// uos.Metadata return shape.
 func metadataFromAWS(m map[string]string) uos.Metadata {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(uos.Metadata, len(m))
-	for k, v := range m {
-		out[strings.ToLower(k)] = v
-	}
-	return out
+	return uos.Metadata(s3common.LowerMetadataKeys(m))
 }
 
 // applyContent stamps ContentHeaders fields onto the matching SDK
