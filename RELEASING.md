@@ -134,6 +134,21 @@ git push origin providers/aws/v0.1.0
 
 git tag providers/minio/v0.1.0
 git push origin providers/minio/v0.1.0
+
+# Tag M3 provider modules (alibaba shipped first as the s3common
+# validation case; tencent/huawei/volcengine landed in parallel
+# afterwards). Same replace-cleanup-per-commit pattern as M2.
+git tag providers/alibaba/v0.1.0
+git push origin providers/alibaba/v0.1.0
+
+git tag providers/tencent/v0.1.0
+git push origin providers/tencent/v0.1.0
+
+git tag providers/huawei/v0.1.0
+git push origin providers/huawei/v0.1.0
+
+git tag providers/volcengine/v0.1.0
+git push origin providers/volcengine/v0.1.0
 ```
 
 After tagging, verify both tags are fetchable:

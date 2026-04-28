@@ -11,6 +11,59 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ### Added
 
+- **`providers/tencent/v0.1.0`** (M3 phase 2, native HMAC against
+  Tencent COS via `cos-go-sdk-v5`): full `pkg/uos.Client` surface
+  (Bucket / Object / Multipart / Signer); presign via COS HMAC v1
+  (`q-sign-algorithm=sha1`); auto-batches `DeleteMany` at the COS
+  1000-key cap. Tencent-specific quirk: bucket names MUST contain
+  the `-<appid>` suffix (e.g. `examplebucket-1250000000`); driver
+  auto-suffixes via `DriverConfig.AppID` when unsuffixed name is
+  passed. Per-bucket `*cos.Client` design (cos-go-sdk-v5 binds
+  BucketURL to client) handled via shared http.Client + per-call
+  bucketClient() that reuses signing creds + connection pool.
+  CRC64 integrity verification ON by default. Bypasses
+  `pkg/uos/transfer.Manager` (consistent with M2 + Uploader). Test:
+  `TestRunSuite` SKIPs by default (COS HMAC v1 ≠ AWS SigV4); cloud-
+  nightly env vars `OMC_TENCENT_NIGHTLY_KEY/_SECRET/_BUCKET/_REGION/
+  _APPID` gate real-COS contract.
+
+- **`providers/huawei/v0.1.0`** (M3 phase 2, native HMAC against
+  Huawei OBS via `huaweicloud-sdk-go-obs`): full `pkg/uos.Client`
+  surface; presign via `obs.CreateSignedUrl` (HMAC v2 / v4
+  selectable through `DriverConfig.Signature`); `Close()` actually
+  releases the SDK's internal http.Transport pool (alibaba/aws/
+  minio drivers have no Close to call). Huawei-specific quirk:
+  region/endpoint pairing is **strict** — wrong pairing produces
+  silent HTTP 301/307 redirects rather than a clean
+  `ErrInvalidArgument`. Driver makes `Endpoint` mandatory in
+  `Validate` (no auto-derivation from Region) so misconfiguration
+  surfaces at construction time; documented in three places (Validate
+  doc, Open doc, package doc). Bypasses `transfer.Manager`. Test:
+  `TestRunSuite` SKIPs by default (OBS HMAC ≠ AWS SigV4); cloud-
+  nightly env vars `OMC_HUAWEI_NIGHTLY_KEY/_SECRET/_BUCKET/_ENDPOINT`
+  (+ optional `_REGION`) gate real-OBS contract.
+
+- **`providers/volcengine/v0.1.0`** (M3 phase 2, native HMAC
+  against Volcengine TOS via `ve-tos-golang-sdk/v2`): full
+  `pkg/uos.Client` surface; presign via `tos.PreSignedURL`. TOS
+  uses SigV4-style signing but with `defaultServiceName = "tos"`
+  instead of `"s3"`, making the wire dialect incompatible with
+  MinIO's S3 SigV4 verifier. Endpoint convention auto-derived as
+  `https://tos-<region>.volces.com` when absent. Storage class
+  pass-through: TOS supports `STANDARD`/`IA`/`INTELLIGENT_TIERING`/
+  `ARCHIVE_FR`/`ARCHIVE`/`COLD_ARCHIVE`/`DEEP_COLD_ARCHIVE`
+  (note `ARCHIVE_FR` = "Archive Frequent Restore", TOS-specific
+  with no AWS direct equivalent — closest analog is `GLACIER_IR`).
+  Volcengine-specific quirk: `ListObjectsV2` uses Marker/NextMarker
+  pagination (NOT S3 V2 `ContinuationToken` — that lives in TOS's
+  separate `ListObjectsType2` API); driver maps unified opaque
+  cursor to Marker. `MaxRetryCount` exposed via `DriverConfig` for
+  callers needing vendor-level retry escape hatch (default 0 =
+  disabled). Bypasses `transfer.Manager`. Test: `TestRunSuite`
+  SKIPs by default; cloud-nightly env vars
+  `OMC_VOLCENGINE_NIGHTLY_KEY/_SECRET/_BUCKET/_REGION/_ENDPOINT`
+  gate real-TOS contract.
+
 - **`providers/alibaba/v0.1.0`** (M3 first driver, native HMAC against
   Alibaba OSS via `aliyun-oss-go-sdk` v3): full `pkg/uos.Client`
   surface (Bucket / Object / Multipart / Signer); presign via OSS

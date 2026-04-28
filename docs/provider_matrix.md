@@ -23,9 +23,9 @@ The matrix below is the **target** v1 state. Cells marked `Planned` get filled d
 | AWS S3 | `providers/aws` | `aws-sdk-go-v2` | **Shipped (v0.1.0)** | M2 |
 | MinIO | `providers/minio` | `minio-go/v7` | **Shipped (v0.1.0)** | M2 |
 | Alibaba OSS | `providers/alibaba` | `aliyun-oss-go-sdk` | **Shipped (v0.1.0)** | M3 |
-| Tencent COS | `providers/tencent` | `cos-go-sdk-v5` | Planned | M3 |
-| Huawei OBS | `providers/huawei` | `huaweicloud-sdk-go-obs` | Planned | M3 |
-| Volcengine TOS | `providers/volcengine` | `ve-tos-golang-sdk/v2/tos` | Planned | M3 |
+| Tencent COS | `providers/tencent` | `cos-go-sdk-v5` | **Shipped (v0.1.0)** | M3 |
+| Huawei OBS | `providers/huawei` | `huaweicloud-sdk-go-obs` | **Shipped (v0.1.0)** | M3 |
+| Volcengine TOS | `providers/volcengine` | `ve-tos-golang-sdk/v2/tos` | **Shipped (v0.1.0)** | M3 |
 | Google Cloud Storage | `providers/gcs` | `cloud.google.com/go/storage` | Planned | M4 |
 | Azure Blob Storage | `providers/azure` | `azure-sdk-for-go/sdk/storage/azblob` | Planned | M4 |
 | Qiniu Kodo | `providers/qiniu` | `qiniu/go-sdk/v7` | Planned | M5 |
@@ -39,19 +39,19 @@ The 13 v1 capabilities (frozen — see `architecture_plan.md` §7.2). Cells refl
 
 | Capability \ Provider | aws | minio | alibaba | tencent | huawei | volcengine | gcs | azure | qiniu | upyun |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `CapBucketCRUD` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapObjectCRUD` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapListPrefixDelimiter` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapRangeRead` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapMultipartUpload` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
-| `CapSignedURLRead` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | ⏳M5 | 🟡M5³ |
-| `CapSignedURLWrite` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹ | 🟡M4² | 🟡M5⁴ | 🟡M5³ |
-| `CapDirectGrant` | ❌⁵ | ❌⁵ | ❌⁵ | ❌M3⁵ | ❌M3⁵ | ❌M3⁵ | ❌M4⁵ | ⏳M4⁶ | ⏳M5 | ⏳M5 |
-| `CapObjectTagging` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
-| `CapVersioning` | 🟡¹³ | 🟡¹³ | 🟡¹³ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | 🟡M4⁸ | ❌M5⁹ | ❌M5⁹ |
-| `CapObjectACL` | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | ⏳M3 | ⏳M3 | ⏳M3 | 🟡M4¹⁰ | 🟡M4¹¹ | 🧩M5⁷ | 🧩M5⁷ |
-| `CapManagedEncryption` | ✅ | ✅ | ✅ | ⏳M3 | ⏳M3 | ⏳M3 | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
-| `CapNativeMove` | 🧩¹² | 🧩¹² | 🧩¹² | 🧩M3¹² | 🧩M3¹² | 🧩M3¹² | 🧩M4¹² | 🧩M4¹² | 🧩M5¹² | 🧩M5¹² |
+| `CapBucketCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapObjectCRUD` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapListPrefixDelimiter` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapRangeRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapMultipartUpload` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | ⏳M5 | ⏳M5 |
+| `CapSignedURLRead` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡M4¹ | 🟡M4² | ⏳M5 | 🟡M5³ |
+| `CapSignedURLWrite` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡M4¹ | 🟡M4² | 🟡M5⁴ | 🟡M5³ |
+| `CapDirectGrant` | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌⁵ | ❌M4⁵ | ⏳M4⁶ | ⏳M5 | ⏳M5 |
+| `CapObjectTagging` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
+| `CapVersioning` | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | 🟡¹³ | ⏳M4 | 🟡M4⁸ | ❌M5⁹ | ❌M5⁹ |
+| `CapObjectACL` | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡¹⁴ | 🟡M4¹⁰ | 🟡M4¹¹ | 🧩M5⁷ | 🧩M5⁷ |
+| `CapManagedEncryption` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳M4 | ⏳M4 | 🧩M5⁷ | 🧩M5⁷ |
+| `CapNativeMove` | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩¹² | 🧩M4¹² | 🧩M4¹² | 🧩M5¹² | 🧩M5¹² |
 
 ### Footnotes
 

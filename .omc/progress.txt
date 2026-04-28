@@ -94,7 +94,63 @@ Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
 
 ---
 
-# Ralph run #2 — Milestone M2 (AWS + MinIO drivers)
+# Lead-direct work — testkit hoist + M2 + post-M2 cleanups
+
+(Logged separately — see commits 8b918dd, 9a304fb, 7a7124e, 4737013, 78dd457.)
+
+---
+
+# Ralph run #3 — M3 phase 2 (tencent + huawei + volcengine drivers)
+
+## Session start
+Date: 2026-04-28
+Trigger: /ralph (path C continuation): alibaba already shipped via lead-direct work (commit 78dd457); now spawn Ralph for the remaining 3 国云 drivers in parallel.
+Scope: tencent + huawei + volcengine native drivers + matrix + docs. Tags maintainer-gated.
+
+## Pre-state snapshot
+- Commits on main: 8 (bootstrap + 7 work commits, latest 78dd457).
+- 5 modules in go.work: root + testkit + aws + minio + alibaba.
+- s3common.MapCodeString table extended with 10 OSS aliases during alibaba landing.
+- Cross-vendor lessons documented in commit 78dd457 message + alibaba executor's "Things the Next 3 M3 Executors Should Know" section.
+- All 4 currently-shipped drivers bypass transfer.Manager (consistent with Uploader contract).
+
+## Stories (4)
+- US-001 (P1): providers/tencent (cos-go-sdk-v5) — pending
+- US-002 (P2): providers/huawei (huaweicloud-sdk-go-obs) — pending
+- US-003 (P3): providers/volcengine (ve-tos-golang-sdk/v2/tos) — pending
+- US-004 (P4): matrix + CHANGELOG + RELEASING + AGENTS update (lead) — pending
+
+## Iteration log
+
+### Iteration 1 (2026-04-28) — 3 parallel Opus executors for US-001/002/003
+Spawned 3 simultaneous Opus executor agents (one per driver), each given commit 78dd457 (alibaba) as exemplar + the cross-vendor lessons from that commit's message.
+
+**providers/tencent (1771 LoC)**: cos-go-sdk-v5 v0.7.73. Per-bucket *cos.Client design (SDK binds BucketURL to client) handled via shared http.Client + bucketClient() helper. Bucket name + appid suffix auto-handled via DriverConfig.AppID. CRC64 default ON. Internal retryer disabled (RetryOpt.Count=1). NO new s3common codes added — table is sufficient.
+
+**providers/huawei (1418 LoC)**: huaweicloud-sdk-go-obs v3.26.3+incompatible. CRITICAL: Endpoint MANDATORY in Validate (no auto-derivation from Region) per region/endpoint pairing strictness — wrong pairing produces silent 301/307 instead of clean ErrInvalidArgument. Documented in 3 places. Close() actually called (releases SDK transport pool). NO new s3common codes added.
+
+**volcengine (1374 LoC)**: ve-tos-golang-sdk/v2 v2.9.4. Service name "tos" in SigV4 (not "s3") = wire-incompatible with MinIO. Endpoint auto-derived as https://tos-<region>.volces.com. Storage class pass-through (incl. ARCHIVE_FR — TOS-specific frequent-restore tier, no AWS direct equivalent). ListObjectsV2 uses Marker (NOT S3 V2 ContinuationToken — TOS's separate ListObjectsType2 API). MaxRetryCount knob in DriverConfig for retry escape hatch. NO new s3common codes added.
+
+**Validation goal of putting alibaba first WORKED**: 3 国云 vendors all reported "no new codes needed" after alibaba's 10-code OSS extension. s3common.MapCodeString table is now confirmed sufficient for the entire S3-family driver set (6 vendors). Architect grep-verified honesty (0 local code-string switches in any of the 3 new drivers).
+
+### Iteration 2 (2026-04-28) — US-004 lead docs
+Lead-executed: matrix update (16 cell edits — 3 driver-status rows + 13 cap rows × 3 columns), CHANGELOG (3 new [Unreleased] sub-entries), RELEASING.md §4 (4 new tag commands).
+
+### Iteration 3 (2026-04-28) — Architect verification (Step 7) + Deslop (7.5) + Regression (7.6)
+Architect verdict: **APPROVED**. All 4 PRD stories pass with fresh evidence. Frozen surface intact (TestFrozenSurface 3 subtests PASS); NFR-008 holds (root go.sum=0); zero cross-provider imports; multi-module hygiene complete; capabilities() returns match matrix cell-by-cell; executors honest about no s3common gap-fill (verified via grep).
+
+Architect's 4 v0.2.0+ optimization NOTES (non-blocking; deferred):
+- s3common.MapServiceCode(code, status) — extract the triplicated mapServiceCode helper
+- s3common.IsRetryableWithStatus(code, status) — extract the (s3common.IsRetryable || 5xx fallback) pattern
+- credential.MustExtractHMAC(c, providerName) — quadruplicated HMAC extraction across drivers
+- s3common.S3FamilyCapabilities(reasons) — capability-cell duplication across 6 S3-family drivers (~50 LoC × 6)
+
+Deslop pass: NO slop within bounded scope. TODO/FIXME/HACK/debug = 0 hits in all 3 drivers; panic/fmt.Print/log.Print/println = 0 hits; the only "TODO-like" matches were XCosMetaXXX SDK field-name false positives.
+
+Step 7.6 post-deslop regression: First run had ONE flake — TestNewClient_InsecureSkipVerify_EmitsWarning failed (httpx_test.go:121 expected warning, got nothing). Re-run all green. Diagnosed as pre-existing test flake (log.Default() buffer shared across parallel httpx tests; -race exposes the goroutine-scheduling race). pkg/uos/httpx was NOT modified in this Ralph (git diff 78dd457..HEAD -- pkg/uos/httpx returns empty). Logged as v0.2.0 follow-up: "fix httpx_test.go log-capture race". Not blocking M3 phase 2 sign-off.
+
+Ralph Step 8: invoking /oh-my-claudecode:cancel for clean state exit.
+
 
 ## Session start
 Date: 2026-04-28

@@ -1,64 +1,78 @@
 {
-  "task": "Implement Milestone M2 per docs/provider_roadmap.md: providers/aws (aws-sdk-go-v2) + providers/minio (minio-go/v7) as native drivers. Both pass pkg/testkit/contract.RunSuite against the testcontainers MinIO endpoint. Update provider_matrix.md, add cloud-nightly opt-in workflow, document changes.",
-  "scope_note": "M2 autonomous scope. Tag commands (providers/aws/v0.1.0, providers/minio/v0.1.0) and configuring real AWS credentials in CI are maintainer-gated per RELEASING.md §4.",
+  "task": "M3 phase 2: implement remaining 3 国云 native drivers (providers/tencent + providers/huawei + providers/volcengine) using the alibaba commit (78dd457) as reference and the cross-vendor lessons captured in its commit message. All consume pkg/uos/s3common; all skip RunSuite-by-default (vendor SDK ≠ AWS SigV4); all gate cloud-nightly env vars per OMC_<VENDOR>_NIGHTLY_*. Update matrix + CHANGELOG + RELEASING. Tag commands maintainer-gated.",
+  "scope_note": "Phase 2 of M3. Tags providers/<name>/v0.1.0 are maintainer-gated per RELEASING.md §4. M4 (GCS+Azure) is the next session's work.",
   "session_started": "2026-04-28",
-  "all_stories_complete": true,
+  "all_stories_complete": false,
   "stories": [
     {
       "id": "US-001",
-      "title": "Scaffold + implement providers/minio native driver (minio-go/v7)",
+      "title": "providers/tencent native driver (cos-go-sdk-v5)",
       "priority": 1,
-      "passes": true,
-      "evidence": "providers/minio/ scaffolded via scripts/add-provider.sh + go.mod/go.sum tidied (go 1.22 floor; require minio-go/v7 + parent + testkit; replace directives for parent + testkit). 6 files: factory.go (242), driver.go (838), error_map.go (185), capabilities.go (74), driver_test.go (82, //go:build docker), go.mod (87). Driver implements Client + 4 sub-services (19 methods) backed by *minio.Client + *minio.Core (raw multipart). Disables minio-go's internal retryer (MaxRetries=1). Capabilities() returns 13-cell Report matching matrix exactly. Verification: go build / go vet / gofmt -l . silent; go test -tags=docker -short passes.",
-      "acceptanceCriteria": ["see PRD baseline (10 criteria, all met)"]
+      "passes": false,
+      "acceptanceCriteria": [
+        "providers/tencent/ scaffolded via scripts/add-provider.sh tencent (go.mod with module github.com/maqian/object-storage-client/providers/tencent + parent + testkit requires + replace directives).",
+        "providers/tencent/go.mod requires github.com/tencentyun/cos-go-sdk-v5 directly; no other cloud SDKs.",
+        "factory.go implements uos.Factory: Provider() = 'tencent'; Validate requires Region+CredentialProvider (Tencent COS bucket name MUST contain `-<appid>` suffix — document this in Validate's doc comment, but DO NOT enforce since DriverConfig.AppID may have set it); Open builds the COS BaseURL from region+optional appid + custom endpoint, configures HMAC creds, disables SDK retryer.",
+        "driver.go implements full uos.Client + 4 sub-services using cos-go-sdk-v5. Multipart via Object.InitiateMultipartUpload/UploadPart/CompleteMultipartUpload/AbortMultipartUpload (bypasses transfer.Manager per M2 + Uploader contract).",
+        "Metadata key prefix: x-cos-meta-* (use s3common.LowerMetadataKeys for case-folding; strip/add prefix per direction).",
+        "Signer.SignURL via cos-go-sdk-v5's GetPresignedURL. Signer.IssueDirectGrant returns ErrUnsupported{CapDirectGrant} per matrix footnote 5.",
+        "error_map.go uses s3common.MapCodeString → MapHTTPStatus → MapContextErr → ErrInternal decision tree on top of cos-go-sdk-v5's *cos.ErrorResponse extraction. Pass through any pre-existing *uos.Error.",
+        "capabilities.go returns the 13-cell Report matching the tencent column shape: 9 ✅ / 1 ❌ / 2 🟡 / 1 🧩 (same as aws+minio+alibaba — S3-family).",
+        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default (cos signature ≠ SigV4); cloud-nightly env vars OMC_TENCENT_NIGHTLY_KEY/_SECRET/_BUCKET/_REGION/_APPID gate the real-COS contract suite. TestSpawnMinIOSmoke runs in PR gate (validates testkit wiring).",
+        "From providers/tencent: go build / go vet / gofmt -l . silent. From root: TestFrozenSurface 3 subtests pass (no Code/Cap added).",
+        "Report any tencent-specific S3-compat error codes NOT in s3common.MapCodeString — lead will extend s3common in a follow-up if any surface."
+      ]
     },
     {
       "id": "US-002",
-      "title": "Scaffold + implement providers/aws native driver (aws-sdk-go-v2 + service/s3)",
+      "title": "providers/huawei native driver (huaweicloud-sdk-go-obs)",
       "priority": 2,
-      "passes": true,
-      "evidence": "providers/aws/ scaffolded; go.mod auto-bumped to go 1.25.0 by aws-sdk-go-v2 v1.41+ transitive (root pkg/uos still go 1.22; floor preserved). 6 files: factory.go (293, with EndpointResolverV2 + NopRetryer), driver.go (994, with Content-MD5 middleware for DeleteObjects MinIO compat), error_map.go (240), capabilities.go (81), driver_test.go (127, //go:build docker), go.mod (39). Multipart uses raw s3.CreateMultipartUpload/UploadPart/CompleteMultipartUpload (NOT s3manager.Uploader and NOT pkg/uos/transfer.Manager). Capabilities() matches matrix exactly. 28 PASS, 17 SKIP, 0 FAIL. 3 SkipCases: signer/issue_direct_grant_shape (Unsupported per matrix); object/put_get_special_char_key (SDK-vs-MinIO canonicalisation drift on '?' and '%FF'; cloud-nightly will validate); multipart/resume_after_failure (suite-level deferred to v0.2 StateStore wiring).",
-      "acceptanceCriteria": ["see PRD baseline (9 criteria, all met)"]
+      "passes": false,
+      "acceptanceCriteria": [
+        "providers/huawei/ scaffolded; go.mod requires github.com/huaweicloud/huaweicloud-sdk-go-obs directly.",
+        "factory.go implements uos.Factory: Provider() = 'huawei'; Validate requires Endpoint (region/endpoint pairing is strict per provider_roadmap.md M3 risk note — incorrect pairing causes silent 301/307 redirects); Open builds the OBS Client with HMAC creds, custom endpoint, disabled SDK retryer.",
+        "driver.go implements full uos.Client + 4 sub-services using huaweicloud-sdk-go-obs. Multipart via the OBS native primitives (InitiateMultipartUpload/UploadPart/CompleteMultipartUpload/AbortMultipartUpload). Bypasses transfer.Manager.",
+        "Metadata key prefix: x-obs-meta-* (use s3common.LowerMetadataKeys; strip/add per direction).",
+        "Signer.SignURL via OBS's signed URL helper. Signer.IssueDirectGrant returns ErrUnsupported{CapDirectGrant}.",
+        "error_map.go uses the s3common decision tree on top of obs.ObsError extraction.",
+        "capabilities.go returns the 13-cell Report matching huawei column (S3-family default shape — 9 ✅ / 1 ❌ / 2 🟡 / 1 🧩).",
+        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default; OMC_HUAWEI_NIGHTLY_* env vars gate real-OBS contract. TestSpawnMinIOSmoke runs in PR gate.",
+        "From providers/huawei: go build / go vet / gofmt -l . silent. TestFrozenSurface still passes.",
+        "Report any OBS-specific error codes NOT in s3common.MapCodeString."
+      ]
     },
     {
       "id": "US-003",
-      "title": "providers/minio passes pkg/testkit/contract.RunSuite against testcontainers MinIO",
+      "title": "providers/volcengine native driver (ve-tos-golang-sdk/v2/tos)",
       "priority": 3,
-      "passes": true,
-      "evidence": "Independent rerun (lead): `cd providers/minio && go test -tags=docker -short -count=1 ./...` → ok 0.457s. Bucket/object/multipart/signer/capability/error case groups all pass. TestFrozenSurface from root unchanged (3 subtests pass). No new pkg/uos Codes/Capabilities introduced.",
-      "acceptanceCriteria": ["see PRD baseline (4 criteria, all met)"]
+      "passes": false,
+      "acceptanceCriteria": [
+        "providers/volcengine/ scaffolded; go.mod requires github.com/volcengine/ve-tos-golang-sdk/v2 directly.",
+        "factory.go implements uos.Factory: Provider() = 'volcengine'; Validate requires Region+CredentialProvider; Open builds the TOS Client with HMAC creds + custom endpoint, disabled SDK retryer.",
+        "driver.go implements full uos.Client + 4 sub-services using ve-tos-golang-sdk/v2/tos. Multipart via TOS native primitives. Bypasses transfer.Manager.",
+        "Metadata key prefix: x-tos-meta-*.",
+        "Signer.SignURL via tos.PreSignedURL. IssueDirectGrant returns ErrUnsupported{CapDirectGrant}.",
+        "Storage class strings: TOS uses STANDARD/IA/ARCHIVE_FR/ARCHIVE — pass through opaquely; the unified StorageClass field accepts the vendor's literal.",
+        "error_map.go uses the s3common decision tree on top of tos.TosServerError extraction.",
+        "capabilities.go returns the 13-cell Report (S3-family shape).",
+        "driver_test.go (//go:build docker): TestRunSuite SKIPs by default; OMC_VOLCENGINE_NIGHTLY_* env vars gate real-TOS contract. TestSpawnMinIOSmoke runs in PR gate.",
+        "From providers/volcengine: go build / go vet / gofmt -l . silent. TestFrozenSurface still passes.",
+        "Report any TOS-specific error codes NOT in s3common.MapCodeString."
+      ]
     },
     {
       "id": "US-004",
-      "title": "providers/aws passes pkg/testkit/contract.RunSuite against testcontainers MinIO (S3-compat)",
+      "title": "Matrix update + CHANGELOG/RELEASING/AGENTS for the 3 new providers",
       "priority": 4,
-      "passes": true,
-      "evidence": "Independent rerun (lead): `cd providers/aws && go test -tags=docker -short -count=1 ./...` → ok 1.186s. AWS SDK configured against SpawnMinIO endpoint with custom EndpointResolverV2 + UsePathStyle=true + NopRetryer + region us-east-1. 3 SkipCases logged with rationale (see US-002 evidence). TestFrozenSurface unchanged.",
-      "acceptanceCriteria": ["see PRD baseline (4 criteria, all met)"]
-    },
-    {
-      "id": "US-005",
-      "title": "docs/provider_matrix.md updated: aws + minio shipped status + capability cells",
-      "priority": 5,
-      "passes": true,
-      "evidence": "Driver implementation status: aws + minio rows now 'Shipped (v0.1.0)'. 13 capability rows × 2 columns updated from ⏳M2 placeholders to actual symbols matching capabilities() returns: 9 ✅ (BucketCRUD, ObjectCRUD, ListPrefixDelimiter, RangeRead, MultipartUpload, SignedURLRead, SignedURLWrite, ObjectTagging, ManagedEncryption — verified by `grep -E '^\\| \\`Cap.*\\` \\| ✅ \\| ✅' wc -l = 9`); 2 🟡 (Versioning footnote 13, ObjectACL footnote 14 — both new); 1 ❌ (DirectGrant footnote 5); 1 🧩 (NativeMove footnote 12). Two new footnotes (13, 14) added explaining S3-family Versioning/ACL conditionality. M2 superscripts dropped from filled cells.",
-      "acceptanceCriteria": ["see PRD baseline (4 criteria, all met)"]
-    },
-    {
-      "id": "US-006",
-      "title": ".github/workflows/cloud-nightly.yml — opt-in cloud nightly with skip-without-secret pattern",
-      "priority": 6,
-      "passes": true,
-      "evidence": ".github/workflows/cloud-nightly.yml created with 2 jobs: aws-nightly (probes for OMC_AWS_NIGHTLY_KEY; SKIPs with ::warning:: when absent; runs `go test -tags=cloud -count=1 -timeout=20m ./... -run TestCloudNightly` from providers/aws when present) and minio-nightly (same pattern, OMC_MINIO_NIGHTLY_ENDPOINT secret). Triggered by schedule (daily 04:17 UTC) + workflow_dispatch (manual). YAML parses (verified). permissions: contents: read. The TestCloudNightly entry-point is M2.x driver work — workflow infrastructure ships now; the test bodies are tracked.",
-      "acceptanceCriteria": ["see PRD baseline (6 criteria, 5 met directly; 6th — 'documented in RELEASING.md' — covered by RELEASING.md §4 / §5 references and the cloud-nightly skip-pattern documentation in the workflow file itself)"]
-    },
-    {
-      "id": "US-007",
-      "title": "CHANGELOG.md + RELEASING.md updated for the 2 new provider modules",
-      "priority": 7,
-      "passes": true,
-      "evidence": "CHANGELOG.md: 2 new top-of-list entries [providers/aws/v0.1.0] and [providers/minio/v0.1.0] dated 2026-04-28 with full Added + Notes sections. RELEASING.md §1 module map: providers/aws + providers/minio rows added (status ACTIVE), generic <name> row demoted to PLANNED. RELEASING.md §4 release checklist now documents `git tag providers/aws/v0.1.0` and `git tag providers/minio/v0.1.0` commands (maintainer-gated; tag root → testkit → providers in order so each can pin its parent's freshly-tagged version and remove its own replace directive). RELEASING.md §5: ADR Follow-up #1 answer recorded (both M2 drivers BYPASS pkg/uos/transfer.Manager → v0.2.0 should ship Architect's Uploader interface refactor) AND Follow-up #4 answer recorded (s3common candidates identified: pointer helpers, range formatter, metadata case-folding, DeleteMany 1000-batch threshold, S3-compat error code table; defer to M3 once one more driver confirms duplication). AGENTS.md Appendix A item 4 cross-references RELEASING.md §5 Follow-up #4.",
-      "acceptanceCriteria": ["see PRD baseline (5 criteria, all met)"]
+      "passes": false,
+      "acceptanceCriteria": [
+        "docs/provider_matrix.md: tencent + huawei + volcengine driver-status rows updated to 'Shipped (v0.1.0)'.",
+        "docs/provider_matrix.md: 13 capability rows × 3 columns (tencent + huawei + volcengine) updated from ⏳M3 placeholders to actual symbols matching each driver's capabilities() return. Same 9 ✅ / 1 ❌⁵ / 2 🟡 / 1 🧩¹² shape as alibaba/aws/minio.",
+        "CHANGELOG.md [Unreleased] gains entries for providers/tencent/v0.1.0, providers/huawei/v0.1.0, providers/volcengine/v0.1.0 — each summarising SDK choice, cross-vendor SDK pattern reuse, and any vendor-specific s3common extension if applicable.",
+        "RELEASING.md §4: provider tag commands extended to include providers/tencent/v0.1.0, providers/huawei/v0.1.0, providers/volcengine/v0.1.0.",
+        "AGENTS.md if any architectural follow-up surfaced (e.g., new s3common gap-fill for additional vendor codes), update item 4 accordingly.",
+        "If any of the 3 drivers surfaced new S3-family error codes not in s3common.MapCodeString, extend the s3common table + tests in this same change-set (don't defer to a separate commit)."
+      ]
     }
   ]
 }

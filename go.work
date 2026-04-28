@@ -5,5 +5,8 @@ use (
 	./pkg/testkit/contract
 	./providers/alibaba
 	./providers/aws
+	./providers/huawei
 	./providers/minio
+	./providers/tencent
+	./providers/volcengine
 )
