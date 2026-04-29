@@ -64,14 +64,34 @@ if [[ "${SKIP_TESTS:-}" != "1" ]]; then
     || { echo "ERROR: TestFrozenSurface FAILED" >&2; exit 1; }
 fi
 
-# Module set: root + testkit + 10 providers (12 total).
+# Modules to TAG: root + testkit + 10 providers (12 total). These are
+# the public modules whose tags ship to the proxy.
 PROVIDERS=(alibaba aws azure gcs huawei minio qiniu tencent upyun volcengine)
-GOMOD_DIRS=(. ./pkg/testkit/contract)
+TAGGED_DIRS=(. ./pkg/testkit/contract)
 for p in "${PROVIDERS[@]}"; do
-  GOMOD_DIRS+=("./providers/$p")
+  TAGGED_DIRS+=("./providers/$p")
 done
 
+# Modules whose go.mod requires also need bumping but which are NOT
+# tagged (workspace consumers — examples + benchmarks). They must stay
+# in sync with TAGGED_DIRS so go.work workspace resolution doesn't fall
+# through to proxy lookups for stale v0.1.x references.
+UNTAGGED_DIRS=(
+  ./examples/quickstart
+  ./examples/multipart
+  ./examples/direct_grant_qiniu
+  ./examples/direct_grant_upyun
+  ./examples/streaming_write
+  ./benchmarks
+)
+
+# All go.mod dirs that need version bumps.
+GOMOD_DIRS=("${TAGGED_DIRS[@]}" "${UNTAGGED_DIRS[@]}")
+
 # Bump in-repo require lines via `go mod edit` (more robust than sed).
+# Walks every potential in-repo dep: root module + testkit + each of the
+# 10 providers. Examples + benchmarks may depend on any subset of the 10
+# providers, so the loop must consider all of them.
 echo "==> bumping go.mod require lines to $VERSION across ${#GOMOD_DIRS[@]} modules"
 for d in "${GOMOD_DIRS[@]}"; do
   if [[ ! -f "$d/go.mod" ]]; then continue; fi
@@ -81,6 +101,11 @@ for d in "${GOMOD_DIRS[@]}"; do
   if grep -q "^	github.com/maqian/oss-client/pkg/testkit/contract v" "$d/go.mod"; then
     (cd "$d" && go mod edit -require="github.com/maqian/oss-client/pkg/testkit/contract@$VERSION")
   fi
+  for p in "${PROVIDERS[@]}"; do
+    if grep -q "^	github.com/maqian/oss-client/providers/$p v" "$d/go.mod"; then
+      (cd "$d" && go mod edit -require="github.com/maqian/oss-client/providers/$p@$VERSION")
+    fi
+  done
 done
 
 # Update go.work workspace replace block versions in place.
