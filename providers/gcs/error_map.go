@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/googleapi"
@@ -111,7 +112,15 @@ func mapError(provider uos.Provider, op, bucket, key string, err error) error {
 			}
 		}
 		if !matched {
-			if mapped, ok := s3common.MapHTTPStatus(apiErr.Code); ok {
+			// fake-gcs-server (and some GCS paths) return 409 with an empty
+			// Errors slice but a human-readable message containing "already
+			// exists". Promote to ErrAlreadyExists before the generic
+			// MapHTTPStatus fallback so the contract suite's
+			// create_idempotency_already_exists case passes against the emulator.
+			if apiErr.Code == http.StatusConflict &&
+				containsFold(apiErr.Message, "already exists") {
+				out.Code = uos.ErrAlreadyExists
+			} else if mapped, ok := s3common.MapHTTPStatus(apiErr.Code); ok {
 				out.Code = mapped
 			}
 		}
@@ -177,6 +186,13 @@ func mapGoogleAPIReason(reason string) (uos.Code, bool) {
 		return uos.ErrChecksumMismatch, true
 	}
 	return "", false
+}
+
+// containsFold reports whether s contains substr under Unicode case-folding.
+// Used to detect "already exists" in emulator error messages that lack a
+// structured Reason field.
+func containsFold(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
 
 // isRetryable hints whether a retry is reasonable. The driver itself

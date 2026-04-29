@@ -89,12 +89,19 @@ func (factoryImpl) Validate(cfg uos.Config) error {
 			),
 		}
 	}
-	if cfg.CredentialProvider == nil {
+	// CredentialProvider may be omitted when EmulatorEndpoint is set:
+	// the fake-gcs-server emulator accepts anonymous requests and the SDK
+	// is configured with option.WithoutAuthentication() in that path.
+	emulatorEndpoint := ""
+	if dc, ok := cfg.DriverConfig.(*DriverConfig); ok && dc != nil {
+		emulatorEndpoint = dc.EmulatorEndpoint
+	}
+	if cfg.CredentialProvider == nil && emulatorEndpoint == "" {
 		return &uos.Error{
 			Code:      uos.ErrInvalidArgument,
 			Provider:  providerID,
 			Operation: "Factory.Validate",
-			Message:   "Config.CredentialProvider is required for the gcs driver",
+			Message:   "Config.CredentialProvider is required for the gcs driver (omit only when DriverConfig.EmulatorEndpoint is set)",
 		}
 	}
 	if cfg.DriverConfig != nil {
@@ -136,17 +143,6 @@ func (f factoryImpl) Open(ctx context.Context, cfg uos.Config) (uos.Client, erro
 		return nil, err
 	}
 
-	cred, err := cfg.CredentialProvider.Resolve(ctx, string(providerID))
-	if err != nil {
-		return nil, &uos.Error{
-			Code:      uos.ErrUnauthenticated,
-			Provider:  providerID,
-			Operation: "Factory.Open",
-			Message:   "credential provider failed",
-			Cause:     err,
-		}
-	}
-
 	dc, _ := cfg.DriverConfig.(*DriverConfig)
 	if dc == nil {
 		dc = &DriverConfig{}
@@ -166,18 +162,52 @@ func (f factoryImpl) Open(ctx context.Context, cfg uos.Config) (uos.Client, erro
 		}
 	}
 
-	clientOpts, signerEmail, signerKey, err := buildClientOptions(cred, dc)
-	if err != nil {
-		return nil, &uos.Error{
-			Code:      uos.ErrInvalidArgument,
-			Provider:  providerID,
-			Operation: "Factory.Open",
-			Message:   err.Error(),
-			Cause:     err,
+	var clientOpts []option.ClientOption
+	var signerEmail string
+	var signerKey []byte
+
+	if dc.EmulatorEndpoint != "" && cfg.CredentialProvider == nil {
+		// Emulator-anonymous path: fake-gcs-server accepts unauthenticated
+		// requests. Set the endpoint so the SDK routes to the local server,
+		// and disable authentication so no token fetch occurs.
+		//
+		// storage.WithJSONReads() is required: by default the SDK uses the
+		// S3-compatible XML API for object downloads (GET /{bucket}/{object}),
+		// which fake-gcs-server does not implement. WithJSONReads forces the
+		// SDK to use the GCS JSON API (GET /storage/v1/b/{bucket}/o/{object})
+		// for all reads, which the emulator does implement.
+		clientOpts = append(clientOpts,
+			option.WithoutAuthentication(),
+			option.WithEndpoint(dc.EmulatorEndpoint+"/storage/v1/"),
+			storage.WithJSONReads(),
+		)
+	} else {
+		cred, err := cfg.CredentialProvider.Resolve(ctx, string(providerID))
+		if err != nil {
+			return nil, &uos.Error{
+				Code:      uos.ErrUnauthenticated,
+				Provider:  providerID,
+				Operation: "Factory.Open",
+				Message:   "credential provider failed",
+				Cause:     err,
+			}
 		}
-	}
-	if dc.EmulatorEndpoint != "" {
-		clientOpts = append(clientOpts, option.WithEndpoint(dc.EmulatorEndpoint))
+		var buildErr error
+		clientOpts, signerEmail, signerKey, buildErr = buildClientOptions(cred, dc)
+		if buildErr != nil {
+			return nil, &uos.Error{
+				Code:      uos.ErrInvalidArgument,
+				Provider:  providerID,
+				Operation: "Factory.Open",
+				Message:   buildErr.Error(),
+				Cause:     buildErr,
+			}
+		}
+		if dc.EmulatorEndpoint != "" {
+			// CredentialProvider supplied alongside EmulatorEndpoint (e.g.
+			// cloud-nightly run against a remote fake-gcs instance).
+			clientOpts = append(clientOpts, option.WithEndpoint(dc.EmulatorEndpoint))
+		}
 	}
 
 	client, err := storage.NewClient(ctx, clientOpts...)
