@@ -13,7 +13,7 @@ versioned and tagged independently. This document defines:
 
 | Module path                                                | Tag prefix                  | Status (v0.1) | Notes |
 | ---------------------------------------------------------- | --------------------------- | ------------- | ----- |
-| `github.com/maqian/oss-client`                  | `pkg/uos/`                  | ACTIVE        | Root module. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. |
+| `github.com/maqian/oss-client`                  | `vX.Y.Z` (bare)             | ACTIVE        | Root module — `go.mod` lives at the repo root. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. **Tag form is bare `vX.Y.Z`** (no path prefix) per Go's tag-discovery rule for root modules. A vanity `pkg/uos/vX.Y.Z` tag MAY also be created at the same commit for human-readability + CHANGELOG cross-reference, but downstream `go get github.com/maqian/oss-client@vX.Y.Z` ONLY resolves the bare tag — see §5 footnote on the v0.1.0 tag-naming incident. |
 | `github.com/maqian/oss-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
 | `github.com/maqian/oss-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
 | `github.com/maqian/oss-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
@@ -24,19 +24,39 @@ itself, ahead of its originally-planned slot — see §5.
 
 ## 2. Tag scheme
 
-Go module tooling requires that each module's tag be prefixed with
-the module's directory path relative to the repo root. We use:
+Go's module tag-discovery rule:
+- A module whose `go.mod` lives at the **repo root** uses BARE
+  `vX.Y.Z` tags (no path prefix).
+- A module whose `go.mod` lives at a **subpath** uses
+  `<subpath-relative-to-repo-root>/vX.Y.Z` tags.
 
-- Root module (`pkg/uos`): `pkg/uos/vX.Y.Z`
-  - Example: `pkg/uos/v0.1.0`
-- Contract testkit module: `pkg/testkit/contract/vX.Y.Z`
-  - Example: `pkg/testkit/contract/v0.1.0`
-- Provider module (`providers/<name>`): `providers/<name>/vX.Y.Z`
-  - Example: `providers/aws/v0.1.0`
+In this repo:
+
+- **Root module** (`github.com/maqian/oss-client`, `go.mod` at repo root):
+  `vX.Y.Z` — example: `v0.1.0`. The `pkg/uos` directory is a sub-package
+  of the root module, **not** a separate Go module. A vanity
+  `pkg/uos/vX.Y.Z` tag may be created at the same commit for human-
+  readability (CHANGELOG entries reference it as a label), but Go's
+  module proxy ONLY resolves the bare `vX.Y.Z` tag for the root.
+- **Contract testkit module** (`go.mod` at `pkg/testkit/contract/`):
+  `pkg/testkit/contract/vX.Y.Z` — example: `pkg/testkit/contract/v0.1.0`.
+- **Provider module** (`go.mod` at `providers/<name>/`):
+  `providers/<name>/vX.Y.Z` — example: `providers/aws/v0.1.0`.
 
 Each module follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html)
-independently. There is no umbrella repo-wide version; `pkg/uos`,
+independently. There is no umbrella repo-wide version; `github.com/maqian/oss-client`,
 `pkg/testkit/contract`, and each provider drift on their own cadence.
+
+> **Lessons-learned (v0.1.0 tag pass)**: the original §4 release
+> commands tagged the root module as `pkg/uos/v0.1.0`, which Go's
+> module proxy does NOT consult for `github.com/maqian/oss-client@v0.1.0`
+> resolution (it expects a bare `v0.1.0` tag at the repo root). The
+> bare `v0.1.0` tag was added retroactively at the same commit; both
+> tags now point at the same release and `pkg/uos/v0.1.0` is retained
+> as a vanity label. For v0.2.0+, follow the corrected scheme above:
+> tag the root with the bare `vX.Y.Z` form FIRST; the path-prefixed
+> vanity tag is optional and exists purely for CHANGELOG / README
+> cross-reference convenience.
 
 ## 3. Semver-bump rules
 
@@ -117,7 +137,16 @@ module, so the testkit's `replace` directive can be removed and its
 that flips it from local-dev to a real release.
 
 ```bash
-# Tag root first so providers can pin a real parent version
+# Tag root first so providers can pin a real parent version.
+# CANONICAL form is the bare semver — Go's module proxy resolves
+# `github.com/maqian/oss-client@v0.1.0` ONLY against the bare tag.
+git tag v0.1.0
+git push origin v0.1.0
+
+# (Optional) Vanity tag at the same commit for human-readability +
+# CHANGELOG cross-reference. Downstream Go tooling does NOT need this;
+# only the bare `v0.1.0` above is functional. Skip if you don't want
+# the duplicate label.
 git tag pkg/uos/v0.1.0
 git push origin pkg/uos/v0.1.0
 
