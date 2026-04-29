@@ -43,9 +43,13 @@ In this repo:
 - **Provider module** (`go.mod` at `providers/<name>/`):
   `providers/<name>/vX.Y.Z` — example: `providers/aws/v0.1.0`.
 
-Each module follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html)
-independently. There is no umbrella repo-wide version; `github.com/maqian/oss-client`,
-`pkg/testkit/contract`, and each provider drift on their own cadence.
+Each module follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
+**As of v0.2.0**, all 12 in-repo modules synchronise their version
+numbers at every release per the §3 Synchronized-bump rule below;
+there is no per-module drift. The v0.1.x release pass left a one-off
+mixed state (root + aws at v0.1.0; the other 9 providers at v0.1.1
+because of the post-M5 patch) that v0.2.0 collapses into a single
+unified version.
 
 > **Lessons-learned (v0.1.0 tag pass)**: the original §4 release
 > commands tagged the root module as `pkg/uos/v0.1.0`, which Go's
@@ -60,9 +64,30 @@ independently. There is no umbrella repo-wide version; `github.com/maqian/oss-cl
 
 ## 3. Semver-bump rules
 
+### Synchronized bump (v0.2.0+)
+
+**At every release, all 12 in-repo modules bump to the same `vX.Y.Z`
+together.** There is no per-module drift. The bump-magnitude rules
+(patch / minor / major below) apply to the **set** as a whole — pick
+the largest bump any single module needs and apply it to all.
+
+This rule was introduced at v0.2.0 to eliminate the v0.1.x mixed state
+(root + aws at v0.1.0; the other 9 providers at v0.1.1) and to keep
+the GitHub Releases page clean (see §6).
+
+**Mechanics**: run `make release VERSION=vX.Y.Z` from the repo root.
+The `scripts/release.sh` helper bumps every `go.mod` require line and
+the `go.work` workspace replace block, renames `CHANGELOG.md`
+`[Unreleased]` → `[vX.Y.Z]`, commits the prep, and creates 12 git tags
+(1 bare root + 1 testkit + 10 providers) at the prep commit. Push and
+GitHub Release creation are maintainer follow-ups printed at the end.
+
+The pre-v0.2.0 model (per-module independent versioning) is documented
+in older revisions of this file; do not revert to it.
+
 ### Patch (`vX.Y.Z+1`)
 Bug fixes, doc-only changes, internal refactors that do not change
-any exported identifier.
+any exported identifier in **any** module.
 
 ### Minor (`vX.Y+1.0`)
 Additive changes:
@@ -297,3 +322,56 @@ M2 surfaced the answer to two more Follow-ups:
   surface the same duplication.
 
 All other Follow-ups remain at the priority captured in the ADR.
+
+## 6. GitHub Release consolidation (v0.2.0+)
+
+Each release publishes 12 git tags (Go's module proxy requires one tag
+per module — see §2). Without intervention, the GitHub Releases UI
+would create 12 separate Release entries per release moment, cluttering
+the page. To keep the UI clean, **only the bare `vX.Y.Z` root tag gets
+a GitHub Release object**; the other 11 tags exist in git for proxy
+resolution but have no Release UI entry.
+
+### Single-Release pattern
+
+After `make release VERSION=vX.Y.Z` and pushing tags + main:
+
+```bash
+gh release create vX.Y.Z \
+  --target main \
+  --title "vX.Y.Z" \
+  --notes-file <(scripts/release-notes.sh vX.Y.Z)
+```
+
+`scripts/release-notes.sh` emits a markdown body that:
+- Names the release moment.
+- Lists all 12 module-tag references with `go get` one-liners.
+- Links to `CHANGELOG.md` at the release ref for per-version entries.
+- Explains why one Release ↔ 12 tags (this section).
+
+The result: **GitHub Releases page shows one entry per release**
+(matching the synchronized-bump rule's intent) while the Go module
+proxy still finds the 12 tags it needs for sub-module resolution.
+
+### Verification
+
+After `gh release create`, sanity-check:
+
+```bash
+# UI consolidation:
+gh release list --limit 5    # one entry per release moment
+
+# Go proxy still resolves all 12 modules:
+go list -m github.com/maqian/oss-client@vX.Y.Z
+go list -m github.com/maqian/oss-client/pkg/testkit/contract@vX.Y.Z
+go list -m github.com/maqian/oss-client/providers/aws@vX.Y.Z
+# ... (any of the 10 providers)
+```
+
+### Why not auto-attach all 12 tags to one Release?
+
+GitHub's Release object format is 1 Release ↔ 1 tag. There is no
+"Release covering N tags" primitive in the API. The convention used
+here — bare-tag Release + per-module-tag list in the body — is the
+de facto pattern in multi-module Go monorepos (kubernetes, etcd,
+client-go follow the same shape).
