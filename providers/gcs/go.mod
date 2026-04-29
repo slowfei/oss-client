@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	cloud.google.com/go/storage v1.62.1
-	github.com/maqian/oss-client v0.1.0
-	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0
+	github.com/maqian/oss-client v0.2.0
+	github.com/maqian/oss-client/pkg/testkit/contract v0.2.0
 	google.golang.org/api v0.274.0
 )
 

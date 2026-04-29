@@ -3,8 +3,8 @@ module github.com/maqian/oss-client/providers/huawei
 go 1.25.0
 
 require (
-	github.com/maqian/oss-client v0.1.0
-	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0
+	github.com/maqian/oss-client v0.2.0
+	github.com/maqian/oss-client/pkg/testkit/contract v0.2.0
 )
 
 require (

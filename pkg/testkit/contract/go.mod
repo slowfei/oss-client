@@ -3,7 +3,7 @@ module github.com/maqian/oss-client/pkg/testkit/contract
 go 1.25.0
 
 require (
-	github.com/maqian/oss-client v0.1.0
+	github.com/maqian/oss-client v0.2.0
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
 )

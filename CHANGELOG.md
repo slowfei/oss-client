@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ## [Unreleased]
 
+## [v0.2.0]
+
 ### Added
 
 - **`pkg/uos/streamio`** — new sub-package providing
