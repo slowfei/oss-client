@@ -23,4 +23,10 @@
 /examples/multipart/multipart
 /examples/direct_grant_qiniu/direct_grant_qiniu
 /examples/direct_grant_upyun/direct_grant_upyun
+/examples/streaming_write/streaming_write
+# `go build ./examples/<name>` from repo root drops the binary at repo root
 /quickstart
+/multipart
+/direct_grant_qiniu
+/direct_grant_upyun
+/streaming_write

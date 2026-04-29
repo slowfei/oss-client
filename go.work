@@ -6,6 +6,7 @@ use (
 	./examples/direct_grant_upyun
 	./examples/multipart
 	./examples/quickstart
+	./examples/streaming_write
 	./pkg/testkit/contract
 	./providers/alibaba
 	./providers/aws

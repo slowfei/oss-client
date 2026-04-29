@@ -11,6 +11,33 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ### Added
 
+- **`pkg/uos/streamio`** — new sub-package providing
+  `streamio.Writer`, an `io.WriteCloser` that wraps the unified
+  `MultipartService` lifecycle. Callers stream bytes; the helper
+  buffers to ≥5 MiB part boundaries, auto-initiates multipart on
+  first overflow, uploads parts as they fill, and at `Close` either
+  commits via `Complete` (multipart path) or issues a single `Put`
+  (small-object fast path when total ≤ `SmallObjectThreshold`).
+  `Abort` releases vendor-side multipart state without committing
+  (idempotent; safe before/after `Close`). Sticky write errors
+  surface on subsequent `Write` calls; `Close` attempts an Abort to
+  release vendor state and returns the original error. Works on
+  **all 10 v1 providers** because every shipped driver supports
+  `MultipartService` natively — no provider-specific code in the
+  helper. Compile-time `var _ io.WriteCloser = (*Writer)(nil)`
+  asserts the interface contract. Unit tests use an in-memory fake
+  `uos.Client` to verify the lifecycle without Docker; runnable
+  end-to-end demo at [`examples/streaming_write/`](examples/streaming_write/)
+  streams 12 MiB through the helper against MinIO and verifies
+  sha256 round-trip.
+- **`examples/streaming_write/`** — runnable demo of `streamio.Writer`.
+  Generates 12 MiB of synthetic log lines (~144k lines), streams
+  them into a new object (auto-promoted to 3-part multipart at the
+  5 MiB / 5 MiB / 2 MiB boundaries), reads the object back, and
+  verifies byte-for-byte sha256 integrity. Defaults to local MinIO
+  via env vars; pivots to AWS or any S3-compatible endpoint via
+  `OMC_STREAM_*` env vars.
+
 - **`providers/qiniu/v0.1.0`** (M5, native non-HMAC driver against
   Qiniu Kodo via `github.com/qiniu/go-sdk/v7 v7.26.10`): full
   `pkg/uos.Client` surface (Bucket / Object / Multipart / Signer).
