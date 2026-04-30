@@ -63,8 +63,9 @@ func TestRunSuite(t *testing.T) {
 	factory := upyundrv.Factory()
 
 	fut := contract.FactoryUnderTest{
-		Provider: "upyun",
-		Bucket:   bucket,
+		Provider:           "upyun",
+		Bucket:             bucket,
+		BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_UPYUN_NIGHTLY_BUCKET
 		Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 			t.Helper()
 			c, err := factory.Open(ctx, cfg)

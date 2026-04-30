@@ -20,7 +20,7 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "initiate_upload_complete_get", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "mp-end-to-end"
 		mp := c.Multipart(fut.Bucket)
 		up, err := mp.Initiate(ctx, uos.InitiateMultipartRequest{Bucket: fut.Bucket, Key: key})
@@ -73,7 +73,7 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "abort_cleans_up_orphan", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "mp-aborted"
 		mp := c.Multipart(fut.Bucket)
 		up, err := mp.Initiate(ctx, uos.InitiateMultipartRequest{Bucket: fut.Bucket, Key: key})
@@ -96,7 +96,7 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "complete_with_unknown_upload_returns_invalid_argument", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		_, err := c.Multipart(fut.Bucket).Complete(ctx, uos.CompleteMultipartRequest{
 			Bucket: fut.Bucket, Key: "no-such-key", UploadID: "no-such-upload",
 			Parts: []uos.UploadedPart{{PartNumber: 1, ETag: "x"}},

@@ -15,6 +15,32 @@ import (
 func runBucketCases(t *testing.T, fut FactoryUnderTest) {
 	t.Helper()
 
+	// BYOB mode (cloud-nightly): the caller owns the bucket lifecycle.
+	// Skipping the create / create-idempotent cases avoids destroying
+	// the user's pre-existing bucket via the test's own
+	// `bs.Delete(...)` cleanup. The stat_missing_returns_not_found case
+	// below is non-destructive (uses a hardcoded missing-bucket name)
+	// so it still runs in BYOB mode.
+	if fut.BucketIsPreCreated {
+		t.Run("create_stat_list_delete", func(t *testing.T) {
+			t.Skip("BYOB mode (BucketIsPreCreated=true): suite does not own bucket lifecycle; would destroy caller's bucket via cleanup")
+		})
+		t.Run("create_idempotency_already_exists", func(t *testing.T) {
+			t.Skip("BYOB mode (BucketIsPreCreated=true): suite does not own bucket lifecycle; would destroy caller's bucket via cleanup")
+		})
+		runCase(t, fut, "stat_missing_returns_not_found", func(t *testing.T, c uos.Client) {
+			ctx := context.Background()
+			_, err := c.Buckets().Stat(ctx, uos.StatBucketRequest{Name: "uos-contract-missing-bucket"})
+			if err == nil {
+				t.Fatal("Stat missing bucket: want ErrNotFound, got nil")
+			}
+			if !errors.Is(err, &uos.Error{Code: uos.ErrNotFound}) {
+				t.Fatalf("Stat missing bucket: want ErrNotFound, got %v", err)
+			}
+		})
+		return
+	}
+
 	runCase(t, fut, "create_stat_list_delete", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
 		bs := c.Buckets()

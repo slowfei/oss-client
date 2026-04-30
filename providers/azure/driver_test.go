@@ -53,8 +53,9 @@ func TestRunSuite(t *testing.T) {
 		containerName := os.Getenv("OMC_AZURE_NIGHTLY_CONTAINER")
 		factory := azuredrv.Factory()
 		fut := contract.FactoryUnderTest{
-			Provider: "azure",
-			Bucket:   containerName,
+			Provider:           "azure",
+			Bucket:             containerName,
+			BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_AZURE_NIGHTLY_CONTAINER
 			Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 				t.Helper()
 				c, err := factory.Open(ctx, cfg)

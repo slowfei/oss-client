@@ -73,8 +73,9 @@ func TestRunSuite(t *testing.T) {
 	factory := qiniudrv.Factory()
 
 	fut := contract.FactoryUnderTest{
-		Provider: "qiniu",
-		Bucket:   bucket,
+		Provider:           "qiniu",
+		Bucket:             bucket,
+		BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_QINIU_NIGHTLY_BUCKET
 		Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 			t.Helper()
 			c, err := factory.Open(ctx, cfg)

@@ -73,7 +73,11 @@ func TestRunSuite(t *testing.T) {
 	fut := contract.FactoryUnderTest{
 		Provider: "volcengine",
 		Bucket:   bucket,
-		Endpoint: cfg.Endpoint,
+		// Cloud-nightly: caller (the OMC_VOLCENGINE_NIGHTLY_BUCKET env
+		// var) owns the bucket. Suite skips destructive bucket-lifecycle
+		// cases and ensureBucket probes via Stat instead of Create.
+		BucketIsPreCreated: true,
+		Endpoint:           cfg.Endpoint,
 		Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 			t.Helper()
 			c, err := factory.Open(ctx, cfg)

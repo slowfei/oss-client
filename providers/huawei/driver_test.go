@@ -79,9 +79,10 @@ func TestRunSuite(t *testing.T) {
 	factory := huaweidrv.Factory()
 
 	fut := contract.FactoryUnderTest{
-		Provider: "huawei",
-		Bucket:   bucket,
-		Endpoint: cfg.Endpoint,
+		Provider:           "huawei",
+		Bucket:             bucket,
+		BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_HUAWEI_NIGHTLY_BUCKET
+		Endpoint:           cfg.Endpoint,
 		Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 			t.Helper()
 			c, err := factory.Open(ctx, cfg)

@@ -36,8 +36,26 @@ type FactoryUnderTest struct {
 
 	// Bucket is the bucket name the suite uses for object cases. The
 	// driver MUST be able to create + destroy this bucket via Setup's
-	// returned Client. Empty defers to a per-suite default.
+	// returned Client (when BucketIsPreCreated is false) OR the bucket
+	// MUST already exist and remain owned by the caller (when
+	// BucketIsPreCreated is true). Empty defers to a per-suite default.
 	Bucket string
+
+	// BucketIsPreCreated tells the suite that Bucket already exists and
+	// is owned by the CALLER (typically: a user-managed cloud bucket in
+	// cloud-nightly mode). When true:
+	//
+	//   - bucket-lifecycle cases (create_stat_list_delete +
+	//     create_idempotency_already_exists) are SKIPPED — they would
+	//     destroy the caller's bucket.
+	//   - ensureBucket performs a Stat probe instead of Create + Delete-
+	//     cleanup pair, so a pre-existing user bucket survives the run.
+	//
+	// When false (default), the suite owns bucket lifecycle: it creates
+	// the bucket via ensureBucket and registers a Delete cleanup.
+	// Suitable for emulator runs (testcontainers MinIO / fake-gcs-server
+	// / Azurite) where the whole backend is ephemeral.
+	BucketIsPreCreated bool
 
 	// Setup constructs a uos.Client bound to the driver under test plus
 	// a cleanup func the suite invokes on completion. The returned

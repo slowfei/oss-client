@@ -20,7 +20,7 @@ func runSignerCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "sign_url_get_round_trip", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "presign-get"
 		body := []byte("presigned hello")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
@@ -58,7 +58,7 @@ func runSignerCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "sign_url_put_round_trip", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "presign-put"
 		body := []byte("presigned put")
 		signed, err := c.Signer(fut.Bucket).SignURL(ctx, uos.SignURLRequest{
@@ -94,7 +94,7 @@ func runSignerCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "issue_direct_grant_shape", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		grant, err := c.Signer(fut.Bucket).IssueDirectGrant(ctx, uos.DirectGrantRequest{
 			Bucket: fut.Bucket, Key: "direct-grant-target",
 			Operation: uos.DirectGrantUpload, ExpiresIn: 5 * time.Minute,

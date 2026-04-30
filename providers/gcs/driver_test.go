@@ -53,9 +53,10 @@ func TestRunSuite(t *testing.T) {
 		bucket := os.Getenv("OMC_GCS_NIGHTLY_BUCKET")
 		factory := gcsdrv.Factory()
 		fut := contract.FactoryUnderTest{
-			Provider: "gcs",
-			Bucket:   bucket,
-			Endpoint: cfg.Endpoint,
+			Provider:           "gcs",
+			Bucket:             bucket,
+			BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_GCS_NIGHTLY_BUCKET
+			Endpoint:           cfg.Endpoint,
 			Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 				t.Helper()
 				c, err := factory.Open(ctx, cfg)

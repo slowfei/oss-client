@@ -69,9 +69,10 @@ func TestRunSuite(t *testing.T) {
 	factory := alibabadrv.Factory()
 
 	fut := contract.FactoryUnderTest{
-		Provider: "alibaba",
-		Bucket:   bucket,
-		Endpoint: cfg.Endpoint,
+		Provider:           "alibaba",
+		Bucket:             bucket,
+		BucketIsPreCreated: true, // cloud-nightly: caller owns OMC_ALIBABA_NIGHTLY_BUCKET
+		Endpoint:           cfg.Endpoint,
 		Setup: func(ctx context.Context, t *testing.T) (uos.Client, func(), error) {
 			t.Helper()
 			c, err := factory.Open(ctx, cfg)

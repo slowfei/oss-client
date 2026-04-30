@@ -19,7 +19,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "put_get_round_trip", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "small.txt"
 		body := []byte("hello, world")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
@@ -45,7 +45,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "put_metadata_head_round_trip", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "metadata.txt"
 		md := uos.Metadata{"x-trace-id": "abc-123", "owner": "team"}
 		body := []byte("payload")
@@ -71,7 +71,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "put_get_special_char_key", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		// Keys with #?&%/ catch double-encoding bugs (cross-cutting risk).
 		key := "weird/key with spaces #1?a=2&b=%FF"
 		body := []byte("special")
@@ -94,7 +94,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "get_range_returns_slice", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		key := "ranged.bin"
 		full := []byte("0123456789abcdef")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
@@ -120,7 +120,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "head_missing_returns_not_found", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		_, err := c.Objects(fut.Bucket).Head(ctx, uos.HeadObjectRequest{
 			Bucket: fut.Bucket, Key: "this-key-does-not-exist",
 		})
@@ -134,7 +134,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "exists_missing_returns_false_no_error", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		ok, err := c.Objects(fut.Bucket).Exists(ctx, uos.HeadObjectRequest{
 			Bucket: fut.Bucket, Key: "exists-missing",
 		})
@@ -148,7 +148,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "delete_many_partial_success", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		// Use a small set; the contract is the partial-success shape, not
 		// the exact 1500-key stress test.
 		keys := []string{"dm-a", "dm-b", "dm-c"}
@@ -173,7 +173,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "copy_same_bucket_round_trip", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		src, dst := "copy-src", "copy-dst"
 		body := []byte("copy me")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
@@ -199,7 +199,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 
 	runCase(t, fut, "list_with_prefix_delimiter_pagination", func(t *testing.T, c uos.Client) {
 		ctx := context.Background()
-		ensureBucket(t, c, fut.Bucket)
+		ensureBucket(t, c, fut)
 		// Seed three keys: two under "a/" and one under "b/".
 		keys := []string{"a/1", "a/2", "b/1"}
 		for _, k := range keys {
@@ -222,12 +222,32 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 	})
 }
 
-// ensureBucket creates the bucket if missing and registers a cleanup.
-// Drivers' Create may return ErrAlreadyExists for a pre-existing bucket;
-// that's not a test failure here.
-func ensureBucket(t *testing.T, c uos.Client, name string) {
+// ensureBucket arranges for the bucket to exist for the case body.
+// Behaviour depends on fut.BucketIsPreCreated:
+//
+//   - false (default; emulator / testcontainers mode): the suite owns
+//     the bucket lifecycle. Creates the bucket if missing, tolerating
+//     ErrAlreadyExists, and registers a Delete cleanup that runs when
+//     the test exits.
+//   - true (BYOB / cloud-nightly mode): the bucket is pre-created and
+//     owned by the caller. The suite probes via Stat to confirm it is
+//     reachable; it does NOT attempt Create and does NOT register a
+//     Delete cleanup, so the caller's bucket survives the run intact.
+//
+// The BYOB path is critical for cloud-nightly runs against real vendor
+// buckets — without it, a tolerated AlreadyExists from a pre-existing
+// caller bucket would silently arm a Delete cleanup that destroys the
+// caller's bucket on test teardown.
+func ensureBucket(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 	t.Helper()
 	ctx := context.Background()
+	name := fut.Bucket
+	if fut.BucketIsPreCreated {
+		if _, err := c.Buckets().Stat(ctx, uos.StatBucketRequest{Name: name}); err != nil {
+			t.Fatalf("ensureBucket %q (BYOB): bucket not reachable from this credential/region: %v", name, err)
+		}
+		return
+	}
 	_, err := c.Buckets().Create(ctx, uos.CreateBucketRequest{Name: name})
 	if err != nil && !errors.Is(err, &uos.Error{Code: uos.ErrAlreadyExists}) {
 		t.Fatalf("ensureBucket %q: %v", name, err)
