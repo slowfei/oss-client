@@ -9,6 +9,36 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ## [Unreleased]
 
+### Added
+
+- **`pkg/testkit/contract`** — optional dotenv loading for real-cloud
+  provider tests. Test binaries now read environment from
+  `$OMC_DOTENV_PATH`, `$XDG_CONFIG_HOME/oss-client/oss-client-cloud.env`,
+  or `$HOME/.config/oss-client/oss-client-cloud.env` before provider
+  config is loaded; already-exported environment variables take
+  precedence.
+- **Provider PR-gate coverage** — emulator-backed and signing-shape unit
+  tests for non-S3 providers, including Alibaba OSS, Huawei OBS, Qiniu
+  Kodo, Tencent COS, Upyun, Volcengine TOS, GCS, and Azure.
+
+### Fixed
+
+- **`providers/aws`** — custom endpoints now honor virtual-hosted style
+  when `ForcePathStyle` / `PathStyle` is false, instead of forcing
+  path-style solely because an endpoint override is configured. This
+  keeps AWS S3-compatible endpoints usable without tying them to any
+  vendor-specific provider module.
+- **`pkg/testkit/contract`** — real-cloud contract suites now isolate
+  generated objects under per-run prefixes and clean up test artifacts
+  after each run, including multipart uploads. BYOB mode also preserves
+  caller-owned bucket contents by only deleting objects created by the
+  suite.
+- **Release tooling** — synchronized release bumps now keep examples and
+  benchmarks aligned with the 12 tagged modules.
+- **Provider contract tests** — updated Qiniu and Tencent real-cloud
+  skip cases to match the current contract suite names and provider
+  behavior.
+
 ## [v0.2.0]
 
 ### Added
