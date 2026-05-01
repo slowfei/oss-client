@@ -3,9 +3,9 @@
 // the unified API into aws-sdk-go-v2/service/s3 calls.
 //
 // The driver targets real AWS S3 by default (virtual-host endpoint,
-// SigV4 region-aware) and supports S3-compatible targets (MinIO, Alibaba
-// OSS S3-compatible endpoints, etc.) via Config.Endpoint plus
-// Config.DriverConfig.PathStyle when the target requires path-style. The aws-sdk-go-v2
+// SigV4 region-aware) and supports S3-compatible targets via
+// Config.Endpoint plus Config.DriverConfig.PathStyle when the target
+// requires path-style. The aws-sdk-go-v2
 // internal retryer is disabled at construction time so retries are
 // driven solely by pkg/uos.RetryPolicy (avoiding the documented
 // double-retry pitfall in docs/provider_roadmap.md).
@@ -45,9 +45,8 @@ const providerID uos.Provider = "aws"
 type DriverConfig struct {
 	// PathStyle forces path-style addressing (bucket in URL path rather
 	// than virtual-host subdomain). Leave false for virtual-host S3-
-	// compatible endpoints such as Alibaba OSS's
-	// s3.oss-<region>.aliyuncs.com. Set true for targets such as MinIO
-	// that require path-style addressing.
+	// compatible endpoints. Set true for targets such as MinIO that
+	// require path-style addressing.
 	PathStyle bool
 	// DisableHTTPS, when true, allows HTTP-only endpoints. Honoured by
 	// the EndpointResolverV2 when uos.Config.Endpoint is non-empty.
@@ -242,8 +241,7 @@ type staticEndpointResolver struct {
 // Note: when UsePathStyle is on, the AWS SDK signals it via the
 // EndpointParameters.ForcePathStyle field; we honour it by appending
 // the bucket to the resolved endpoint path. When ForcePathStyle is
-// false, the bucket is placed in the host for virtual-host addressing
-// (for example example-bucket.s3.oss-cn-hangzhou.aliyuncs.com).
+// false, the bucket is placed in the host for virtual-host addressing.
 func (r *staticEndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
 	raw := r.endpoint
 	u, err := url.Parse(raw)

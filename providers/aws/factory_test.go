@@ -8,7 +8,7 @@ import (
 )
 
 func TestStaticEndpointResolverVirtualHostStyle(t *testing.T) {
-	resolver := &staticEndpointResolver{endpoint: "https://s3.oss-cn-hangzhou.aliyuncs.com"}
+	resolver := &staticEndpointResolver{endpoint: "https://s3.compat.example.com"}
 
 	ep, err := resolver.ResolveEndpoint(context.Background(), s3.EndpointParameters{
 		Bucket:         stringPtr("example-bucket"),
@@ -18,7 +18,7 @@ func TestStaticEndpointResolverVirtualHostStyle(t *testing.T) {
 		t.Fatalf("ResolveEndpoint: %v", err)
 	}
 
-	if got, want := ep.URI.String(), "https://example-bucket.s3.oss-cn-hangzhou.aliyuncs.com"; got != want {
+	if got, want := ep.URI.String(), "https://example-bucket.s3.compat.example.com"; got != want {
 		t.Fatalf("endpoint: want %q got %q", want, got)
 	}
 }
