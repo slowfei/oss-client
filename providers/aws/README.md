@@ -67,11 +67,11 @@ func main() {
 
 The `DriverConfig` escape hatch (`*aws.DriverConfig`) accepts three fields:
 
-- `PathStyle bool` — forces path-style addressing (`bucket` in URL path instead of virtual-host). Implicitly enabled when `Config.Endpoint` is non-empty (required for MinIO and other S3-compatible targets).
+- `PathStyle bool` — forces path-style addressing (`bucket` in URL path instead of virtual-host). Leave `false` for virtual-host-compatible endpoints such as Alibaba OSS S3-compatible endpoints; set `true` for MinIO and other targets that require path-style addressing.
 - `DisableHTTPS bool` — allows `http://` endpoints when `Config.Endpoint` is set.
 - `AccelerateEndpoint bool` — enables S3 Transfer Acceleration for real AWS (ignored when `Config.Endpoint` is set).
 
-When `Config.Endpoint` is non-empty the driver routes every request to a static endpoint resolver (`staticEndpointResolver`), making it suitable as a drop-in S3-compatible client for MinIO, Ceph, LocalStack, and similar targets. The SigV4 region field is still required by the AWS SDK even for S3-compat targets — pass any non-empty string (e.g. `"us-east-1"`).
+When `Config.Endpoint` is non-empty the driver routes every request to a static endpoint resolver (`staticEndpointResolver`), making it suitable as a drop-in S3-compatible client for MinIO, Ceph, LocalStack, Alibaba OSS S3-compatible endpoints, and similar targets. `PathStyle=false` resolves bucket requests as virtual-host endpoints (for example `https://example-bucket.s3.oss-cn-hangzhou.aliyuncs.com/key`); `PathStyle=true` resolves them as path-style endpoints (for example `http://localhost:9000/example-bucket/key`). The SigV4 region field is still required by the AWS SDK even for S3-compat targets — pass the target's signing region when one is required.
 
 The aws-sdk-go-v2 internal retryer is disabled (`MaxAttempts=1`) at construction time. All retry logic is delegated to `pkg/uos.RetryPolicy` to prevent double-retry storms. `DeleteObjects` injects a `Content-MD5` middleware so MinIO and older S3-compat targets (which require it) do not return `MissingContentMD5`.
 

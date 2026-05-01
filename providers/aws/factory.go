@@ -3,8 +3,9 @@
 // the unified API into aws-sdk-go-v2/service/s3 calls.
 //
 // The driver targets real AWS S3 by default (virtual-host endpoint,
-// SigV4 region-aware) and supports S3-compatible targets (MinIO, etc.)
-// via Config.Endpoint + Config.DriverConfig.PathStyle. The aws-sdk-go-v2
+// SigV4 region-aware) and supports S3-compatible targets (MinIO, Alibaba
+// OSS S3-compatible endpoints, etc.) via Config.Endpoint plus
+// Config.DriverConfig.PathStyle when the target requires path-style. The aws-sdk-go-v2
 // internal retryer is disabled at construction time so retries are
 // driven solely by pkg/uos.RetryPolicy (avoiding the documented
 // double-retry pitfall in docs/provider_roadmap.md).
@@ -43,8 +44,10 @@ const providerID uos.Provider = "aws"
 // AWS S3 driver as long as Region is set on uos.Config.
 type DriverConfig struct {
 	// PathStyle forces path-style addressing (bucket in URL path rather
-	// than virtual-host subdomain). Implicitly enabled when
-	// uos.Config.Endpoint is non-empty (S3-compat targets need it).
+	// than virtual-host subdomain). Leave false for virtual-host S3-
+	// compatible endpoints such as Alibaba OSS's
+	// s3.oss-<region>.aliyuncs.com. Set true for targets such as MinIO
+	// that require path-style addressing.
 	PathStyle bool
 	// DisableHTTPS, when true, allows HTTP-only endpoints. Honoured by
 	// the EndpointResolverV2 when uos.Config.Endpoint is non-empty.
@@ -122,7 +125,7 @@ func (f factoryImpl) Open(ctx context.Context, cfg uos.Config) (uos.Client, erro
 	if dc == nil {
 		dc = &DriverConfig{}
 	}
-	pathStyle := dc.PathStyle || cfg.Endpoint != ""
+	pathStyle := dc.PathStyle
 
 	credsProvider, err := buildCredentialsProvider(ctx, cfg)
 	if err != nil {
@@ -231,20 +234,16 @@ type staticEndpointResolver struct {
 	disableHTTPS bool
 }
 
-// ResolveEndpoint returns the fixed endpoint URL parsed from the
-// configured string. For S3-compat targets the host never changes; the
-// resolver only varies the URL path when path-style addressing routes
-// the bucket name there (the SDK middleware later joins the request's
-// own path on top, so a path-style PUT becomes
-// "<endpoint>/<bucket>/<key>").
+// ResolveEndpoint returns the endpoint URL parsed from the configured
+// string. For path-style requests the resolver appends the bucket to
+// the URL path. For virtual-host requests it prefixes the bucket onto
+// the endpoint host.
 //
 // Note: when UsePathStyle is on, the AWS SDK signals it via the
 // EndpointParameters.ForcePathStyle field; we honour it by appending
 // the bucket to the resolved endpoint path. When ForcePathStyle is
-// false the bucket would normally be put into the host (virtual-host
-// addressing); for S3-compat targets virtual-host is rare so we still
-// drop the bucket into the path as a sensible default — callers who
-// need true virtual-host should not set Config.Endpoint.
+// false, the bucket is placed in the host for virtual-host addressing
+// (for example example-bucket.s3.oss-cn-hangzhou.aliyuncs.com).
 func (r *staticEndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
 	raw := r.endpoint
 	u, err := url.Parse(raw)
@@ -265,8 +264,10 @@ func (r *staticEndpointResolver) ResolveEndpoint(ctx context.Context, params s3.
 	if r.disableHTTPS && u.Scheme == "https" {
 		u.Scheme = "http"
 	}
-	if params.Bucket != nil && *params.Bucket != "" {
+	if params.Bucket != nil && *params.Bucket != "" && params.ForcePathStyle != nil && *params.ForcePathStyle {
 		u.Path = singleSlashJoin(u.Path, *params.Bucket)
+	} else if params.Bucket != nil && *params.Bucket != "" {
+		u.Host = *params.Bucket + "." + u.Host
 	}
 	return smithyendpoints.Endpoint{URI: *u}, nil
 }
