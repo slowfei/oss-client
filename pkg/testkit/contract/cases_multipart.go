@@ -18,15 +18,21 @@ import (
 func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 	t.Helper()
 
-	runCase(t, fut, "initiate_upload_complete_get", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "initiate_upload_complete_get", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		key := "mp-end-to-end"
+		key := testKey(fut, "mp-end-to-end")
 		mp := c.Multipart(fut.Bucket)
 		up, err := mp.Initiate(ctx, uos.InitiateMultipartRequest{Bucket: fut.Bucket, Key: key})
 		if err != nil {
 			t.Fatalf("Initiate: %v", err)
 		}
+		completed := false
+		defer func() {
+			if !completed {
+				_ = mp.Abort(context.Background(), uos.AbortMultipartRequest{Bucket: fut.Bucket, Key: key, UploadID: up.UploadID})
+			}
+		}()
 		// 3 parts of random bytes; 5 MiB minimum part size for S3-family
 		// providers, but the suite pins the contract not the threshold.
 		// Use 5 MiB to match the typical vendor minimum.
@@ -53,6 +59,7 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 		}); err != nil {
 			t.Fatalf("Complete: %v", err)
 		}
+		completed = true
 		r, err := c.Objects(fut.Bucket).Get(ctx, uos.GetObjectRequest{Bucket: fut.Bucket, Key: key})
 		if err != nil {
 			t.Fatalf("Get assembled: %v", err)
@@ -71,10 +78,10 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 		t.Skip("requires StateStore + driver wiring; exercised in M2")
 	})
 
-	runCase(t, fut, "abort_cleans_up_orphan", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "abort_cleans_up_orphan", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		key := "mp-aborted"
+		key := testKey(fut, "mp-aborted")
 		mp := c.Multipart(fut.Bucket)
 		up, err := mp.Initiate(ctx, uos.InitiateMultipartRequest{Bucket: fut.Bucket, Key: key})
 		if err != nil {
@@ -94,11 +101,11 @@ func runMultipartCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "complete_with_unknown_upload_returns_invalid_argument", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "complete_with_unknown_upload_returns_invalid_argument", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		_, err := c.Multipart(fut.Bucket).Complete(ctx, uos.CompleteMultipartRequest{
-			Bucket: fut.Bucket, Key: "no-such-key", UploadID: "no-such-upload",
+			Bucket: fut.Bucket, Key: testKey(fut, "no-such-key"), UploadID: "no-such-upload",
 			Parts: []uos.UploadedPart{{PartNumber: 1, ETag: "x"}},
 		})
 		if err == nil {

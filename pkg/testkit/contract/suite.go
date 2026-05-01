@@ -77,6 +77,9 @@ type FactoryUnderTest struct {
 	// reach (e.g. a vendor that has no Length-Required error class).
 	// cases_error.go honours this list.
 	SkipCodes []uos.Code
+
+	runPrefix string
+	keyPrefix string
 }
 
 // RunSuite is the entry point every driver test calls. It enumerates
@@ -92,6 +95,10 @@ func RunSuite(t *testing.T, fut FactoryUnderTest) {
 	if fut.Bucket == "" {
 		fut.Bucket = "uos-contract-default"
 	}
+	if fut.runPrefix == "" {
+		fut.runPrefix = newRunPrefix(fut.Provider)
+	}
+	t.Logf("contract artifact prefix: %s", fut.runPrefix)
 
 	t.Run("bucket", func(t *testing.T) { runBucketCases(t, fut) })
 	t.Run("object", func(t *testing.T) { runObjectCases(t, fut) })
@@ -135,5 +142,20 @@ func runCase(t *testing.T, fut FactoryUnderTest, name string, body func(t *testi
 		ctx := context.Background()
 		c := openClient(ctx, t, fut)
 		body(t, c)
+	})
+}
+
+func runArtifactCase(t *testing.T, fut FactoryUnderTest, name string, body func(t *testing.T, c uos.Client, fut FactoryUnderTest)) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		if reason := shouldSkip(fut, t.Name()); reason != "" {
+			t.Skipf("driver opt-out: %s", reason)
+		}
+		ctx := context.Background()
+		c := openClient(ctx, t, fut)
+		caseFUT := fut
+		caseFUT.keyPrefix = fut.runPrefix + sanitizeKeySegment(name) + "/"
+		defer cleanupTestArtifacts(context.Background(), t, c, caseFUT)
+		body(t, c, caseFUT)
 	})
 }

@@ -17,10 +17,10 @@ import (
 func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 	t.Helper()
 
-	runCase(t, fut, "put_get_round_trip", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "put_get_round_trip", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		key := "small.txt"
+		key := testKey(fut, "small.txt")
 		body := []byte("hello, world")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 			Bucket: fut.Bucket, Key: key,
@@ -43,10 +43,10 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "put_metadata_head_round_trip", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "put_metadata_head_round_trip", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		key := "metadata.txt"
+		key := testKey(fut, "metadata.txt")
 		md := uos.Metadata{"x-trace-id": "abc-123", "owner": "team"}
 		body := []byte("payload")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
@@ -69,11 +69,11 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "put_get_special_char_key", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "put_get_special_char_key", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		// Keys with #?&%/ catch double-encoding bugs (cross-cutting risk).
-		key := "weird/key with spaces #1?a=2&b=%FF"
+		key := testKey(fut, "weird/key with spaces #1?a=2&b=%FF")
 		body := []byte("special")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 			Bucket: fut.Bucket, Key: key,
@@ -92,10 +92,10 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "get_range_returns_slice", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "get_range_returns_slice", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		key := "ranged.bin"
+		key := testKey(fut, "ranged.bin")
 		full := []byte("0123456789abcdef")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 			Bucket: fut.Bucket, Key: key,
@@ -118,11 +118,11 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "head_missing_returns_not_found", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "head_missing_returns_not_found", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		_, err := c.Objects(fut.Bucket).Head(ctx, uos.HeadObjectRequest{
-			Bucket: fut.Bucket, Key: "this-key-does-not-exist",
+			Bucket: fut.Bucket, Key: testKey(fut, "this-key-does-not-exist"),
 		})
 		if err == nil {
 			t.Fatal("Head missing object: want ErrNotFound, got nil")
@@ -132,11 +132,11 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "exists_missing_returns_false_no_error", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "exists_missing_returns_false_no_error", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		ok, err := c.Objects(fut.Bucket).Exists(ctx, uos.HeadObjectRequest{
-			Bucket: fut.Bucket, Key: "exists-missing",
+			Bucket: fut.Bucket, Key: testKey(fut, "exists-missing"),
 		})
 		if err != nil {
 			t.Fatalf("Exists: want nil error, got %v", err)
@@ -146,12 +146,12 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "delete_many_partial_success", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "delete_many_partial_success", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		// Use a small set; the contract is the partial-success shape, not
 		// the exact 1500-key stress test.
-		keys := []string{"dm-a", "dm-b", "dm-c"}
+		keys := []string{testKey(fut, "dm-a"), testKey(fut, "dm-b"), testKey(fut, "dm-c")}
 		for _, k := range keys {
 			if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 				Bucket: fut.Bucket, Key: k,
@@ -171,10 +171,10 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "copy_same_bucket_round_trip", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "copy_same_bucket_round_trip", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
-		src, dst := "copy-src", "copy-dst"
+		src, dst := testKey(fut, "copy-src"), testKey(fut, "copy-dst")
 		body := []byte("copy me")
 		if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 			Bucket: fut.Bucket, Key: src,
@@ -197,11 +197,11 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 		}
 	})
 
-	runCase(t, fut, "list_with_prefix_delimiter_pagination", func(t *testing.T, c uos.Client) {
+	runArtifactCase(t, fut, "list_with_prefix_delimiter_pagination", func(t *testing.T, c uos.Client, fut FactoryUnderTest) {
 		ctx := context.Background()
 		ensureBucket(t, c, fut)
 		// Seed three keys: two under "a/" and one under "b/".
-		keys := []string{"a/1", "a/2", "b/1"}
+		keys := []string{testKey(fut, "a/1"), testKey(fut, "a/2"), testKey(fut, "b/1")}
 		for _, k := range keys {
 			if _, err := c.Objects(fut.Bucket).Put(ctx, uos.PutObjectRequest{
 				Bucket: fut.Bucket, Key: k,
@@ -211,7 +211,7 @@ func runObjectCases(t *testing.T, fut FactoryUnderTest) {
 			}
 		}
 		out, err := c.Objects(fut.Bucket).List(ctx, uos.ListObjectsRequest{
-			Bucket: fut.Bucket, Prefix: "a/",
+			Bucket: fut.Bucket, Prefix: testKey(fut, "a/"),
 		})
 		if err != nil {
 			t.Fatalf("List: %v", err)
