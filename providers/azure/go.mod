@@ -6,8 +6,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4
-	github.com/maqian/oss-client v0.2.0
-	github.com/maqian/oss-client/pkg/testkit/contract v0.2.0
+	github.com/maqian/oss-client v0.2.1
+	github.com/maqian/oss-client/pkg/testkit/contract v0.2.1
 )
 
 require (

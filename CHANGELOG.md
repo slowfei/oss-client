@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html) independently. See
 
 ## [Unreleased]
 
+## [v0.2.1]
+
 ### Added
 
 - **`pkg/testkit/contract`** — optional dotenv loading for real-cloud
