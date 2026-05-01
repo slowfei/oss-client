@@ -95,7 +95,7 @@ func TestRunSuite(t *testing.T) {
 
 			// SignedURLWrite is intentionally not supported (footnote 4):
 			// callers must use IssueDirectGrant for write authorization.
-			"TestRunSuite/signer/sign_url_write": "qiniu write authorization is non-URL; use IssueDirectGrant — see provider_matrix.md footnote 4",
+			"TestRunSuite/signer/sign_url_put_round_trip": "qiniu write authorization is non-URL; use IssueDirectGrant — see provider_matrix.md footnote 4",
 
 			// DirectGrant on Qiniu uses DirectGrantModeToken with the Upload
 			// Token; the contract suite's URL/Form shape expectations do not
