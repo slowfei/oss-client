@@ -7,8 +7,8 @@
 //
 // # Why this test t.Skip's RunSuite by default
 //
-// MinIO speaks the AWS SigV4 wire dialect; the aliyun-oss-go-sdk speaks the
-// OSS HMAC dialect (whether AuthV1 / AuthV2 / AuthV4 — all three differ from
+// MinIO speaks the AWS SigV4 wire dialect; the alibabacloud-oss-go-sdk-v2 speaks the
+// OSS HMAC dialect (whether AuthV1 / AuthV4 — both differ from
 // AWS SigV4 in the canonical-string construction, the signed-headers list, and
 // the "OSS ..." vs "AWS4-HMAC-SHA256 ..." Authorization-header prefix). The
 // two are not wire-compatible: handing an OSS-signed request to MinIO yields

@@ -5,64 +5,55 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
+	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
+	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/retry"
 
 	"github.com/slowfei/oss-client/pkg/uos"
 	"github.com/slowfei/oss-client/pkg/uos/credential"
 )
 
-// providerID is the canonical Provider id this driver registers under.
-// Pinned so changes are caught at compile-time by the surface tests.
+// providerID 是此 driver 注册的规范 Provider 标识。
+// 写死为常量，确保编译时检查能捕获变更。
 const providerID uos.Provider = "alibaba"
 
-// DriverConfig is the Alibaba-specific options bag. Callers set this on
-// uos.Config.DriverConfig; Factory.Validate type-asserts it. All fields
-// are optional; the zero value yields a working virtual-host OSS driver
-// as long as Region or Endpoint is set on uos.Config.
+// DriverConfig 是 Alibaba 专属的选项集。调用方在 uos.Config.DriverConfig
+// 上设置此值；Factory.Validate 通过类型断言校验。所有字段均为可选；
+// 零值即可得到一个可工作的虚拟主机模式 OSS driver（前提是 uos.Config 上
+// 设置了 Region 或 Endpoint）。
+//
+// v2 SDK 已将 UseCNAME / PathStyle / AuthVersion / DisableSSLVerify
+// 等配置项提升为 oss.Config 的一等字段；DriverConfig 保留为扩展预留。
 type DriverConfig struct {
-	// UseCNAME, when true, treats Config.Endpoint as a custom CNAME
-	// pointing at OSS (e.g. cdn-cname.example.com). Off by default;
-	// virtual-host addressing is the default for the standard OSS hosts.
-	UseCNAME bool
-	// PathStyle forces path-style addressing (bucket in URL path rather
-	// than virtual-host subdomain). Implicitly enabled when
-	// uos.Config.Endpoint is non-empty AND not a CNAME (S3-compat /
-	// MinIO targets need it).
-	PathStyle bool
-	// AuthVersion selects the OSS signing algorithm. Empty defaults to
-	// SDK default (v1). Use "v4" for SigV4-style signing in newer
-	// regions. Mapped to oss.AuthV1 / oss.AuthV2 / oss.AuthV4.
-	AuthVersion string
-	// DisableSSLVerify allows insecure TLS endpoints. Mirrors the
-	// vendor SDK's InsecureSkipVerify ClientOption; off by default.
-	DisableSSLVerify bool
+	// Extra 是透传给 v2 Client Options 的回调，用于注入高级配置
+	//（例如覆盖 Endpoint、注入自定义 HTTPClient 等）。
+	// 为空时使用默认行为。
+	Extra func(*oss.Options)
 }
 
-// Factory returns a uos.Factory for the Alibaba OSS driver. Drivers
-// register themselves at init time (or callers may register manually):
+// Factory 返回 Alibaba OSS driver 的 uos.Factory。
+// driver 在 init 时自行注册（调用方也可手动注册）：
 //
 //	uos.DefaultRegistry().Register(alibaba.Factory())
 func Factory() uos.Factory { return factoryImpl{} }
 
-// factoryImpl is the concrete uos.Factory for Alibaba OSS.
+// factoryImpl 是 Alibaba OSS 的具体 uos.Factory 实现。
 type factoryImpl struct{}
 
-// init registers this driver with the process-global Registry. Tests and
-// callers that don't want the global side effect should construct an
-// isolated Registry via uos.NewRegistry and Register Factory() manually.
+// init 将此 driver 注册到进程级 Registry。
+// 不想产生全局副作用的测试和调用方应构造独立的 Registry
+// 并通过 uos.NewRegistry 手动 Register(Factory())。
 func init() {
 	_ = uos.DefaultRegistry().Register(factoryImpl{})
 }
 
-// Provider returns the canonical provider id ("alibaba"). Required by
-// the uos.Factory interface.
+// Provider 返回规范 provider 标识（"alibaba"）。实现 uos.Factory 接口。
 func (factoryImpl) Provider() uos.Provider { return providerID }
 
-// Validate checks cfg for structural problems without performing any
-// network I/O. Either Region or Endpoint MUST be set; CredentialProvider
-// is required (OSS rejects anonymous access for the operations the
-// contract suite exercises). DriverConfig, when non-nil, must be a
-// *DriverConfig.
+// Validate 检查 cfg 的结构合法性，不执行任何网络 I/O。
+// Region 或 Endpoint 至少有一个必须设置；CredentialProvider 是必选的
+//（OSS 对合约套件涉及的访问操作拒绝匿名请求）。
+// DriverConfig 如非 nil 则必须为 *DriverConfig。
 func (factoryImpl) Validate(cfg uos.Config) error {
 	if cfg.Provider != "" && cfg.Provider != providerID {
 		return &uos.Error{
@@ -104,20 +95,20 @@ func (factoryImpl) Validate(cfg uos.Config) error {
 	return nil
 }
 
-// Open performs the credential probe and constructs the underlying
-// *oss.Client wrapped in a uos.Client. It honors:
+// Open 执行凭证探测并构造底层的 *oss.Client，封装为 uos.Client 返回。
+// 处理以下配置：
 //
-//   - cfg.Endpoint as the OSS endpoint URL (e.g. "https://oss-cn-hangzhou.aliyuncs.com");
-//     when empty, derived from cfg.Region as "https://oss-<region>.aliyuncs.com".
-//   - cfg.CredentialProvider for AK/SK + optional STS session token.
-//   - DriverConfig.UseCNAME / PathStyle / AuthVersion / DisableSSLVerify.
+//   - cfg.Endpoint 作为 OSS endpoint URL（例如 "https://oss-cn-hangzhou.aliyuncs.com"）；
+//     为空时从 cfg.Region 推导为 "https://oss-<region>.aliyuncs.com"。
+//   - cfg.CredentialProvider 用于获取 AK/SK + 可选的 STS session token。
+//   - DriverConfig.Extra 用于注入 v2 Client Options 回调。
 //
-// The aliyun-oss-go-sdk does NOT expose a built-in retryer to disable;
-// transient retry is the caller's responsibility (the SDK retries some
-// network errors at the http.Client transport layer only). pkg/uos.RetryPolicy
-// remains the authoritative retry surface — drivers MUST NOT add an
-// extra retry layer here (per docs/provider_roadmap.md cross-cutting
-// risk: "double-retry").
+// v2 SDK 内置请求级重试器（retry.NewStandard）；本项目采用 pkg/uos.RetryPolicy
+// 作为权威重试入口，所以必须显式禁用 v2 重试以避免"双重重试"风险
+//（见 docs/provider_roadmap.md cross-cutting risk）。
+//
+// 签名算法默认设置为 SignatureVersionV1，与 v1 SDK 的 AuthV1 行为保持一致；
+// 调用方可通过 DriverConfig.Extra 覆盖为 SignatureVersionV4。
 func (f factoryImpl) Open(_ context.Context, cfg uos.Config) (uos.Client, error) {
 	if err := f.Validate(cfg); err != nil {
 		return nil, err
@@ -145,60 +136,31 @@ func (f factoryImpl) Open(_ context.Context, cfg uos.Config) (uos.Client, error)
 		}
 	}
 
-	dc, _ := cfg.DriverConfig.(*DriverConfig)
-	if dc == nil {
-		dc = &DriverConfig{}
-	}
-
 	endpoint := cfg.Endpoint
 	if endpoint == "" {
 		endpoint = fmt.Sprintf("https://oss-%s.aliyuncs.com", cfg.Region)
 	}
 
-	clientOpts := []oss.ClientOption{}
-	if token != "" {
-		clientOpts = append(clientOpts, oss.SecurityToken(token))
-	}
-	if cfg.Region != "" {
-		clientOpts = append(clientOpts, oss.Region(cfg.Region))
-	}
-	if dc.UseCNAME {
-		clientOpts = append(clientOpts, oss.UseCname(true))
-	} else if dc.PathStyle || isCustomEndpoint(endpoint) {
-		// Path-style addressing is required for S3-compat / MinIO
-		// targets and any non-standard OSS endpoint where the bucket
-		// cannot be safely promoted to a virtual-host subdomain.
-		clientOpts = append(clientOpts, oss.ForcePathStyle(true))
-	}
-	switch strings.ToLower(dc.AuthVersion) {
-	case "v1", "":
-		// SDK default; no option needed.
-	case "v2":
-		clientOpts = append(clientOpts, oss.AuthVersion(oss.AuthV2))
-	case "v4":
-		clientOpts = append(clientOpts, oss.AuthVersion(oss.AuthV4))
-	default:
-		return nil, &uos.Error{
-			Code:      uos.ErrInvalidArgument,
-			Provider:  providerID,
-			Operation: "Factory.Open",
-			Message:   fmt.Sprintf("DriverConfig.AuthVersion=%q is invalid (allowed: v1, v2, v4)", dc.AuthVersion),
-		}
-	}
-	if dc.DisableSSLVerify {
-		clientOpts = append(clientOpts, oss.InsecureSkipVerify(true))
+	dc, _ := cfg.DriverConfig.(*DriverConfig)
+	if dc == nil {
+		dc = &DriverConfig{}
 	}
 
-	client, err := oss.New(endpoint, akid, secret, clientOpts...)
-	if err != nil {
-		return nil, &uos.Error{
-			Code:      uos.ErrInvalidArgument,
-			Provider:  providerID,
-			Operation: "Factory.Open",
-			Message:   "oss.New",
-			Cause:     err,
-		}
+	v2cfg := oss.NewConfig().
+		WithRegion(cfg.Region).
+		WithEndpoint(endpoint).
+		WithCredentialsProvider(credentials.NewStaticCredentialsProvider(akid, secret, token)).
+		WithRetryer(retry.NopRetryer{}).
+		WithSignatureVersion(oss.SignatureVersionV1)
+
+	// 构建 v2 Client。Extra 回调仅在非 nil 时传入，避免将 nil 函数作为
+	// variadic 参数传递导致 NewClient 内部 for-range 时 panic。
+	var optFns []func(*oss.Options)
+	if dc.Extra != nil {
+		optFns = append(optFns, dc.Extra)
 	}
+
+	client := oss.NewClient(v2cfg, optFns...)
 
 	return &driverImpl{
 		cfg:    cfg,
@@ -206,11 +168,9 @@ func (f factoryImpl) Open(_ context.Context, cfg uos.Config) (uos.Client, error)
 	}, nil
 }
 
-// extractHMAC unwraps the Credential into the (access key, secret, token)
-// triple this driver needs. *credential.EnvHMACCredential is the
-// reference HMAC payload shape; the function also accepts the value form
-// for caller convenience and returns a clear error for unknown payload
-// shapes.
+// extractHMAC 将 Credential 解包为此 driver 需要的 (access key, secret, token) 三元组。
+// *credential.EnvHMACCredential 是参考 HMAC 载荷形状；函数也接受值形式以便调用方使用，
+// 对未知载荷形状返回明确错误。
 func extractHMAC(c credential.Credential) (akid, secret, token string, err error) {
 	if c.Scheme != "" && c.Scheme != credential.AuthHMAC {
 		return "", "", "", fmt.Errorf("alibaba driver requires AuthHMAC credentials, got %q", string(c.Scheme))
@@ -234,15 +194,5 @@ func extractHMAC(c credential.Credential) (akid, secret, token string, err error
 	}
 }
 
-// isCustomEndpoint reports whether endpoint targets something other than
-// the standard "*.aliyuncs.com" OSS host family (e.g. MinIO, a private
-// OSS-compat service). Custom endpoints default to path-style addressing
-// because virtual-host promotion of the bucket name into the hostname is
-// only safe for the official OSS host suffix.
-func isCustomEndpoint(endpoint string) bool {
-	lower := strings.ToLower(endpoint)
-	return !strings.Contains(lower, ".aliyuncs.com")
-}
-
-// Compile-time guarantees.
+// 编译时保证。
 var _ uos.Factory = factoryImpl{}

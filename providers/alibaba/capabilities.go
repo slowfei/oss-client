@@ -1,7 +1,7 @@
 // Package alibaba is the native uos.Client driver for Alibaba Cloud OSS.
 // It targets the v0.1 frozen pkg/uos surface (architecture_plan §1) and
 // implements every method on uos.Client by translating to/from
-// github.com/aliyun/aliyun-oss-go-sdk/oss.
+// github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss.
 //
 // All exported types and methods carry doc comments so the package is
 // directly usable from godoc; vendor SDK types stay confined to this
@@ -43,7 +43,7 @@ func capabilities() capability.Report {
 			},
 			capability.CapRangeRead: {
 				Availability: capability.Supported,
-				Reason:       "HTTP Range header on GetObject (oss.Range / oss.NormalizedRange)",
+				Reason:       "HTTP Range header on GetObject (oss.GetObjectRequest.Range / RangeBehavior)",
 			},
 			capability.CapMultipartUpload: {
 				Availability: capability.Supported,
@@ -51,11 +51,11 @@ func capabilities() capability.Report {
 			},
 			capability.CapSignedURLRead: {
 				Availability: capability.Supported,
-				Reason:       "OSS Bucket.SignURL (HMAC v1 / v4 selectable via DriverConfig)",
+				Reason:       "OSS Client.Presign (HMAC v1 / v4 selectable via oss.Config.SignatureVersion)",
 			},
 			capability.CapSignedURLWrite: {
 				Availability: capability.Supported,
-				Reason:       "OSS Bucket.SignURL with HTTPPut",
+				Reason:       "OSS Client.Presign with PutObjectRequest",
 			},
 			capability.CapDirectGrant: {
 				Availability: capability.Unsupported,
