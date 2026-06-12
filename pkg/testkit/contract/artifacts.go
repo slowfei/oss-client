@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 const cleanupBatchSize = 1000

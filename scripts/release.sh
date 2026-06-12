@@ -95,22 +95,22 @@ GOMOD_DIRS=("${TAGGED_DIRS[@]}" "${UNTAGGED_DIRS[@]}")
 echo "==> bumping go.mod require lines to $VERSION across ${#GOMOD_DIRS[@]} modules"
 for d in "${GOMOD_DIRS[@]}"; do
   if [[ ! -f "$d/go.mod" ]]; then continue; fi
-  if grep -q "^	github.com/maqian/oss-client v" "$d/go.mod"; then
-    (cd "$d" && go mod edit -require="github.com/maqian/oss-client@$VERSION")
+  if grep -q "^	github.com/slowfei/oss-client v" "$d/go.mod"; then
+    (cd "$d" && go mod edit -require="github.com/slowfei/oss-client@$VERSION")
   fi
-  if grep -q "^	github.com/maqian/oss-client/pkg/testkit/contract v" "$d/go.mod"; then
-    (cd "$d" && go mod edit -require="github.com/maqian/oss-client/pkg/testkit/contract@$VERSION")
+  if grep -q "^	github.com/slowfei/oss-client/pkg/testkit/contract v" "$d/go.mod"; then
+    (cd "$d" && go mod edit -require="github.com/slowfei/oss-client/pkg/testkit/contract@$VERSION")
   fi
   for p in "${PROVIDERS[@]}"; do
-    if grep -q "^	github.com/maqian/oss-client/providers/$p v" "$d/go.mod"; then
-      (cd "$d" && go mod edit -require="github.com/maqian/oss-client/providers/$p@$VERSION")
+    if grep -q "^	github.com/slowfei/oss-client/providers/$p v" "$d/go.mod"; then
+      (cd "$d" && go mod edit -require="github.com/slowfei/oss-client/providers/$p@$VERSION")
     fi
   done
 done
 
 # Update go.work workspace replace block versions in place.
 echo "==> updating go.work workspace replace versions"
-sed -i '' -E "s|(github.com/maqian/oss-client[^[:space:]]*) v[0-9]+\.[0-9]+\.[0-9]+|\1 $VERSION|g" go.work
+sed -i '' -E "s|(github.com/slowfei/oss-client[^[:space:]]*) v[0-9]+\.[0-9]+\.[0-9]+|\1 $VERSION|g" go.work
 
 # Rename CHANGELOG [Unreleased] → [VERSION] + prepend new [Unreleased].
 echo "==> updating CHANGELOG.md"
@@ -146,7 +146,7 @@ CHANGELOG.md [Unreleased] section renamed to [$VERSION]; a fresh empty
 [Unreleased] block prepended for the next cycle.
 
 Tags created at this commit (12 total; pushed separately by maintainer):
-- $VERSION (bare; root module github.com/maqian/oss-client)
+- $VERSION (bare; root module github.com/slowfei/oss-client)
 - pkg/testkit/contract/$VERSION
 - providers/{alibaba,aws,azure,gcs,huawei,minio,qiniu,tencent,upyun,volcengine}/$VERSION
 
@@ -156,7 +156,7 @@ PREP_COMMIT=$(git rev-parse HEAD)
 
 # Create 12 tags at the prep commit.
 echo "==> creating 12 tags at $PREP_COMMIT"
-git tag -a "$VERSION" -m "$VERSION — root module github.com/maqian/oss-client.
+git tag -a "$VERSION" -m "$VERSION — root module github.com/slowfei/oss-client.
 
 Synchronized release; all 12 in-repo modules tagged at $VERSION at
 commit $PREP_COMMIT. The bare root tag is the canonical reference for
@@ -194,8 +194,8 @@ Next steps (maintainer action):
    only the bare $VERSION tag has a GitHub Release object attached.
 
 3. Verify proxy resolves the new tags (after push):
-     go list -m github.com/maqian/oss-client@$VERSION
-     go list -m github.com/maqian/oss-client/providers/aws@$VERSION
+     go list -m github.com/slowfei/oss-client@$VERSION
+     go list -m github.com/slowfei/oss-client/providers/aws@$VERSION
 
 To roll back BEFORE pushing:
      git tag -d $VERSION pkg/testkit/contract/$VERSION \\

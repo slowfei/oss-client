@@ -11,9 +11,9 @@ import (
 
 	qclient "github.com/qiniu/go-sdk/v7/client"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 )
 
 // signing_test.go provides PR-gate signing-shape coverage for the qiniu

@@ -4,7 +4,7 @@ Runnable demos of the unified `pkg/uos` API.
 
 | Example | Module path | What it shows |
 | --- | --- | --- |
-| [`quickstart/`](quickstart/) | `github.com/maqian/oss-client/examples/quickstart` | End-to-end Open + Put + Get + Sign + Delete against any S3-compatible endpoint (defaults to local MinIO). |
+| [`quickstart/`](quickstart/) | `github.com/slowfei/oss-client/examples/quickstart` | End-to-end Open + Put + Get + Sign + Delete against any S3-compatible endpoint (defaults to local MinIO). |
 
 Future examples (M6 phase 2/3):
 

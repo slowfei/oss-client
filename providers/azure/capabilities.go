@@ -1,6 +1,6 @@
 package azure
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Azure Blob
 // Storage driver. Cell values mirror docs/provider_matrix.md (the "azure"

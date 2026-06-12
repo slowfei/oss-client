@@ -1,6 +1,6 @@
 # pkg/uos/streamio
 
-`github.com/maqian/oss-client/pkg/uos/streamio` — streaming-write helpers
+`github.com/slowfei/oss-client/pkg/uos/streamio` — streaming-write helpers
 on top of the unified `uos.Client` interface. Wraps the multipart-upload
 lifecycle into an `io.WriteCloser` so callers stream bytes without
 managing PartNumber sequences, minimum-part-size buffering, or
@@ -26,8 +26,8 @@ universally supported.
 
 ```go
 import (
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/streamio"
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/streamio"
 )
 
 w, err := streamio.NewWriter(ctx, cli, "my-bucket", "log.txt", streamio.WriterOptions{

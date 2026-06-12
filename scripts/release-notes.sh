@@ -28,18 +28,18 @@ All 12 in-repo modules tagged at \`$VERSION\` at the same commit.
 
 | Module path | Install |
 |---|---|
-| \`github.com/maqian/oss-client\` (root, pkg/uos) | \`go get github.com/maqian/oss-client@$VERSION\` |
-| \`.../pkg/testkit/contract\` | \`go get github.com/maqian/oss-client/pkg/testkit/contract@$VERSION\` |
-| \`.../providers/aws\` | \`go get github.com/maqian/oss-client/providers/aws@$VERSION\` |
-| \`.../providers/minio\` | \`go get github.com/maqian/oss-client/providers/minio@$VERSION\` |
-| \`.../providers/alibaba\` | \`go get github.com/maqian/oss-client/providers/alibaba@$VERSION\` |
-| \`.../providers/tencent\` | \`go get github.com/maqian/oss-client/providers/tencent@$VERSION\` |
-| \`.../providers/huawei\` | \`go get github.com/maqian/oss-client/providers/huawei@$VERSION\` |
-| \`.../providers/volcengine\` | \`go get github.com/maqian/oss-client/providers/volcengine@$VERSION\` |
-| \`.../providers/gcs\` | \`go get github.com/maqian/oss-client/providers/gcs@$VERSION\` |
-| \`.../providers/azure\` | \`go get github.com/maqian/oss-client/providers/azure@$VERSION\` |
-| \`.../providers/qiniu\` | \`go get github.com/maqian/oss-client/providers/qiniu@$VERSION\` |
-| \`.../providers/upyun\` | \`go get github.com/maqian/oss-client/providers/upyun@$VERSION\` |
+| \`github.com/slowfei/oss-client\` (root, pkg/uos) | \`go get github.com/slowfei/oss-client@$VERSION\` |
+| \`.../pkg/testkit/contract\` | \`go get github.com/slowfei/oss-client/pkg/testkit/contract@$VERSION\` |
+| \`.../providers/aws\` | \`go get github.com/slowfei/oss-client/providers/aws@$VERSION\` |
+| \`.../providers/minio\` | \`go get github.com/slowfei/oss-client/providers/minio@$VERSION\` |
+| \`.../providers/alibaba\` | \`go get github.com/slowfei/oss-client/providers/alibaba@$VERSION\` |
+| \`.../providers/tencent\` | \`go get github.com/slowfei/oss-client/providers/tencent@$VERSION\` |
+| \`.../providers/huawei\` | \`go get github.com/slowfei/oss-client/providers/huawei@$VERSION\` |
+| \`.../providers/volcengine\` | \`go get github.com/slowfei/oss-client/providers/volcengine@$VERSION\` |
+| \`.../providers/gcs\` | \`go get github.com/slowfei/oss-client/providers/gcs@$VERSION\` |
+| \`.../providers/azure\` | \`go get github.com/slowfei/oss-client/providers/azure@$VERSION\` |
+| \`.../providers/qiniu\` | \`go get github.com/slowfei/oss-client/providers/qiniu@$VERSION\` |
+| \`.../providers/upyun\` | \`go get github.com/slowfei/oss-client/providers/upyun@$VERSION\` |
 
 Each provider module imports only its own vendor SDK + \`pkg/uos\`.
 Pulling \`providers/aws\` does **not** drag Azure / GCS / qiniu / etc
@@ -48,7 +48,7 @@ into your transitive dep chain. The root \`pkg/uos\` ships
 
 ## Changes
 
-See [\`CHANGELOG.md\`](https://github.com/maqian/oss-client/blob/$VERSION/CHANGELOG.md)
+See [\`CHANGELOG.md\`](https://github.com/slowfei/oss-client/blob/$VERSION/CHANGELOG.md)
 for the full per-version changelog (look for the \`[$VERSION]\` section).
 
 ## Why one Release for 12 tags
@@ -62,7 +62,7 @@ the same \`vX.Y.Z\`. The GitHub Releases page collects them under a
 single Release object (this one) so the visual cadence stays clean —
 even though \`git tag -l\` shows 12 tags per release.
 
-See [\`RELEASING.md\`](https://github.com/maqian/oss-client/blob/$VERSION/RELEASING.md)
+See [\`RELEASING.md\`](https://github.com/slowfei/oss-client/blob/$VERSION/RELEASING.md)
 §3 (synchronized-bump rule) and §6 (GitHub-Release-consolidation
 pattern) for the binding policy.
 EOF

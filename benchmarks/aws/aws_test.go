@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	awsdrv "github.com/maqian/oss-client/providers/aws"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	awsdrv "github.com/slowfei/oss-client/providers/aws"
 )
 
 // awsBenchEnv holds the shared state created once per benchmark binary

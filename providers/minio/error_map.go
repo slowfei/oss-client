@@ -5,8 +5,8 @@ import (
 
 	miniogo "github.com/minio/minio-go/v7"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/s3common"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/s3common"
 )
 
 // mapError translates a minio-go error into a *uos.Error tagged with

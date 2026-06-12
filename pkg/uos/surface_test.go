@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // TestFrozenSurface pins the v0.1 frozen surface so future PRs cannot

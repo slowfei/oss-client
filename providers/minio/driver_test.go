@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 
 	// Side-effect import: the driver's init() registers itself on
 	// uos.DefaultRegistry so we can also reach it via Registry.Open;
 	// the local Open call below uses the typed Factory directly.
-	driver "github.com/maqian/oss-client/providers/minio"
+	driver "github.com/slowfei/oss-client/providers/minio"
 )
 
 // TestRunSuite spins up a MinIO container via testcontainers, points

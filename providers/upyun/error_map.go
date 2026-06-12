@@ -7,8 +7,8 @@ import (
 
 	upyunsdk "github.com/upyun/go-sdk/v3/upyun"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/s3common"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/s3common"
 )
 
 // mapError translates a github.com/upyun/go-sdk/v3 error into a *uos.Error

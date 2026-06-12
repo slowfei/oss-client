@@ -13,9 +13,9 @@ import (
 	qauth "github.com/qiniu/go-sdk/v7/auth"
 	"github.com/qiniu/go-sdk/v7/storage"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
-	"github.com/maqian/oss-client/pkg/uos/s3common"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/s3common"
 )
 
 // driverImpl implements pkg/uos.Client backed by the qiniu/go-sdk/v7

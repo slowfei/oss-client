@@ -46,10 +46,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	volcenginedrv "github.com/maqian/oss-client/providers/volcengine"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	volcenginedrv "github.com/slowfei/oss-client/providers/volcengine"
 )
 
 // TestRunSuite is the M3 PR-gate entry point. It runs the conformance

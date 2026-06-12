@@ -15,7 +15,7 @@
 // architecture_plan §3.3.
 package tencent
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Tencent
 // COS driver. Cell values mirror docs/provider_matrix.md (the "tencent"

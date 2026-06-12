@@ -13,11 +13,11 @@ versioned and tagged independently. This document defines:
 
 | Module path                                                | Tag prefix                  | Status (v0.1) | Notes |
 | ---------------------------------------------------------- | --------------------------- | ------------- | ----- |
-| `github.com/maqian/oss-client`                  | `vX.Y.Z` (bare)             | ACTIVE        | Root module — `go.mod` lives at the repo root. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. **Tag form is bare `vX.Y.Z`** (no path prefix) per Go's tag-discovery rule for root modules. A vanity `pkg/uos/vX.Y.Z` tag MAY also be created at the same commit for human-readability + CHANGELOG cross-reference, but downstream `go get github.com/maqian/oss-client@vX.Y.Z` ONLY resolves the bare tag — see §5 footnote on the v0.1.0 tag-naming incident. |
-| `github.com/maqian/oss-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
-| `github.com/maqian/oss-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
-| `github.com/maqian/oss-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
-| `github.com/maqian/oss-client/providers/<name>` | `providers/<name>/`         | PLANNED       | Future provider modules (M3+: alibaba, tencent, huawei, volcengine; M4: gcs, azure; M5: qiniu, upyun). Scaffolded by `scripts/add-provider.sh`. |
+| `github.com/slowfei/oss-client`                  | `vX.Y.Z` (bare)             | ACTIVE        | Root module — `go.mod` lives at the repo root. Houses `pkg/uos` and its subpackages (`capability`, `credential`, `transfer`, `middleware`, `httpx`). Stdlib-only; no third-party transitive deps. **Tag form is bare `vX.Y.Z`** (no path prefix) per Go's tag-discovery rule for root modules. A vanity `pkg/uos/vX.Y.Z` tag MAY also be created at the same commit for human-readability + CHANGELOG cross-reference, but downstream `go get github.com/slowfei/oss-client@vX.Y.Z` ONLY resolves the bare tag — see §5 footnote on the v0.1.0 tag-naming incident. |
+| `github.com/slowfei/oss-client/pkg/testkit/contract` | `pkg/testkit/contract/` | ACTIVE        | Independent module hosting the cross-provider contract test suite. Pulls `testcontainers-go` and its transitive Docker / containerd / OTel chain so that `pkg/uos` consumers do not pay that cost. Pinned at Go 1.25 because `testcontainers-go` requires it. Local development resolves the parent module via `go.work`; the `replace` directive in its `go.mod` keeps `go mod tidy` runnable until the parent ships a published tag. |
+| `github.com/slowfei/oss-client/providers/aws`    | `providers/aws/`            | ACTIVE        | M2 native driver (`aws-sdk-go-v2 + service/s3`). Pinned at Go 1.25.0 because `aws-sdk-go-v2 v1.41+` requires it. Replace directives for parent + testkit (cleared at release time per §4 Post-tag). |
+| `github.com/slowfei/oss-client/providers/minio`  | `providers/minio/`          | ACTIVE        | M2 native driver (`minio-go/v7`). `go 1.22` (same floor as root). Replace directives for parent + testkit. |
+| `github.com/slowfei/oss-client/providers/<name>` | `providers/<name>/`         | PLANNED       | Future provider modules (M3+: alibaba, tencent, huawei, volcengine; M4: gcs, azure; M5: qiniu, upyun). Scaffolded by `scripts/add-provider.sh`. |
 
 The contract testkit was hoisted out of the root module in v0.1.0
 itself, ahead of its originally-planned slot — see §5.
@@ -32,7 +32,7 @@ Go's module tag-discovery rule:
 
 In this repo:
 
-- **Root module** (`github.com/maqian/oss-client`, `go.mod` at repo root):
+- **Root module** (`github.com/slowfei/oss-client`, `go.mod` at repo root):
   `vX.Y.Z` — example: `v0.1.0`. The `pkg/uos` directory is a sub-package
   of the root module, **not** a separate Go module. A vanity
   `pkg/uos/vX.Y.Z` tag may be created at the same commit for human-
@@ -53,7 +53,7 @@ unified version.
 
 > **Lessons-learned (v0.1.0 tag pass)**: the original §4 release
 > commands tagged the root module as `pkg/uos/v0.1.0`, which Go's
-> module proxy does NOT consult for `github.com/maqian/oss-client@v0.1.0`
+> module proxy does NOT consult for `github.com/slowfei/oss-client@v0.1.0`
 > resolution (it expects a bare `v0.1.0` tag at the repo root). The
 > bare `v0.1.0` tag was added retroactively at the same commit; both
 > tags now point at the same release and `pkg/uos/v0.1.0` is retained
@@ -148,7 +148,7 @@ release executor (or this checklist) does not run them.
 - [ ] `gofmt -l .` prints nothing (root and testkit); `go vet ./...`
   is clean (both modules).
 - [ ] A maintainer has confirmed the canonical module path
-  `github.com/maqian/oss-client` is correct (this is
+  `github.com/slowfei/oss-client` is correct (this is
   also baked into all the example imports in `pkg/uos/doc.go` and
   the `replace` directive in `pkg/testkit/contract/go.mod`).
 
@@ -164,7 +164,7 @@ that flips it from local-dev to a real release.
 ```bash
 # Tag root first so providers can pin a real parent version.
 # CANONICAL form is the bare semver — Go's module proxy resolves
-# `github.com/maqian/oss-client@v0.1.0` ONLY against the bare tag.
+# `github.com/slowfei/oss-client@v0.1.0` ONLY against the bare tag.
 git tag v0.1.0
 git push origin v0.1.0
 
@@ -237,8 +237,8 @@ git push origin providers/upyun/v0.1.1
 After tagging, verify both tags are fetchable:
 
 ```bash
-go list -m github.com/maqian/oss-client@v0.1.0
-go list -m github.com/maqian/oss-client/pkg/testkit/contract@v0.1.0
+go list -m github.com/slowfei/oss-client@v0.1.0
+go list -m github.com/slowfei/oss-client/pkg/testkit/contract@v0.1.0
 ```
 
 (This validates that Go module proxy can serve the tagged versions.)
@@ -248,7 +248,7 @@ go list -m github.com/maqian/oss-client/pkg/testkit/contract@v0.1.0
 - [ ] Open `[Unreleased]` section in CHANGELOG.md for ongoing
   v0.2.0 work.
 - [ ] In `pkg/testkit/contract/go.mod`, replace
-  `github.com/maqian/oss-client v0.0.0` with the
+  `github.com/slowfei/oss-client v0.0.0` with the
   freshly-tagged version and remove the `replace` directive.
 - [ ] Bump the AGENTS.md Appendix A status table if any items
   graduated from "deferred" to "released."
@@ -362,9 +362,9 @@ After `gh release create`, sanity-check:
 gh release list --limit 5    # one entry per release moment
 
 # Go proxy still resolves all 12 modules:
-go list -m github.com/maqian/oss-client@vX.Y.Z
-go list -m github.com/maqian/oss-client/pkg/testkit/contract@vX.Y.Z
-go list -m github.com/maqian/oss-client/providers/aws@vX.Y.Z
+go list -m github.com/slowfei/oss-client@vX.Y.Z
+go list -m github.com/slowfei/oss-client/pkg/testkit/contract@vX.Y.Z
+go list -m github.com/slowfei/oss-client/providers/aws@vX.Y.Z
 # ... (any of the 10 providers)
 ```
 

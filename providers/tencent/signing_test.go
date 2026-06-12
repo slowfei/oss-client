@@ -11,8 +11,8 @@ import (
 
 	cos "github.com/tencentyun/cos-go-sdk-v5"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 )
 
 // signing_test.go provides PR-gate signing-shape coverage for the tencent

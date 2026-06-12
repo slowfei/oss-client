@@ -1,6 +1,6 @@
 package aws
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the AWS S3 driver's capability.Report. It maps
 // every entry in capability.All() (no missing keys, per architecture_plan

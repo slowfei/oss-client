@@ -36,12 +36,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	"github.com/maqian/oss-client/pkg/uos/streamio"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos/streamio"
 
-	_ "github.com/maqian/oss-client/providers/aws"
-	_ "github.com/maqian/oss-client/providers/minio"
+	_ "github.com/slowfei/oss-client/providers/aws"
+	_ "github.com/slowfei/oss-client/providers/minio"
 )
 
 func main() {

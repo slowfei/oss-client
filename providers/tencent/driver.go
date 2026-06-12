@@ -13,9 +13,9 @@ import (
 
 	"github.com/tencentyun/cos-go-sdk-v5"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
-	"github.com/maqian/oss-client/pkg/uos/s3common"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/s3common"
 )
 
 // driverImpl implements pkg/uos.Client by translating to/from

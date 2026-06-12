@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	miniodrv "github.com/maqian/oss-client/providers/minio"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	miniodrv "github.com/slowfei/oss-client/providers/minio"
 )
 
 // minioBenchEnv holds the shared state created once per benchmark binary

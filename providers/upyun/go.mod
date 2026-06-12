@@ -1,10 +1,10 @@
-module github.com/maqian/oss-client/providers/upyun
+module github.com/slowfei/oss-client/providers/upyun
 
 go 1.25.0
 
 require (
-	github.com/maqian/oss-client v0.2.1
-	github.com/maqian/oss-client/pkg/testkit/contract v0.2.1
+	github.com/slowfei/oss-client v0.2.1
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.1
 	github.com/upyun/go-sdk/v3 v3.0.4
 )
 

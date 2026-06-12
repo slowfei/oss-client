@@ -1,11 +1,11 @@
 # providers/azure
 
-`github.com/maqian/oss-client/providers/azure` — native driver for
+`github.com/slowfei/oss-client/providers/azure` — native driver for
 **Azure Blob Storage** via [`github.com/Azure/azure-sdk-for-go/sdk/storage/azblob`](https://godoc.org/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/oss-client/providers/azure` |
+| Module path | `github.com/slowfei/oss-client/providers/azure` |
 | Tag | `providers/azure/v0.1.1` |
 | Vendor SDK | `github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4` |
 | Provider id | `"azure"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/oss-client/providers/azure@providers/azure/v0.1.1
+go get github.com/slowfei/oss-client/providers/azure@providers/azure/v0.1.1
 ```
 
 ## Quickstart
@@ -28,10 +28,10 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/credential"
-    azuredrv "github.com/maqian/oss-client/providers/azure"
-    _ "github.com/maqian/oss-client/providers/azure" // registers Factory
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/credential"
+    azuredrv "github.com/slowfei/oss-client/providers/azure"
+    _ "github.com/slowfei/oss-client/providers/azure" // registers Factory
 )
 
 func main() {

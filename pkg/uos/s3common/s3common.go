@@ -34,7 +34,7 @@
 // so an `internal/` package would be unreachable. Hosting s3common
 // under pkg/uos/ matches the pattern already used by capability,
 // credential, transfer, middleware, and httpx — providers' existing
-// `require github.com/maqian/oss-client` covers it without
+// `require github.com/slowfei/oss-client` covers it without
 // a go.mod change.
 package s3common
 
@@ -44,7 +44,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // MapCodeString returns the uos.Code matching an S3-compat error code

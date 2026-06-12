@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // runSignerCases enumerates the Signer contract cases. SignURL cases

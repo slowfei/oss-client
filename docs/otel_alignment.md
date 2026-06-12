@@ -172,7 +172,7 @@ import (
     "go.opentelemetry.io/otel"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/trace"
-    "github.com/maqian/oss-client/pkg/uos/middleware"
+    "github.com/slowfei/oss-client/pkg/uos/middleware"
 )
 
 type otelTracer struct{ tr trace.Tracer }

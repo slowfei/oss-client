@@ -34,10 +34,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	gcsdrv "github.com/maqian/oss-client/providers/gcs"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	gcsdrv "github.com/slowfei/oss-client/providers/gcs"
 )
 
 // TestRunSuite runs the conformance suite against the in-process

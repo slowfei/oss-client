@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // runBucketCases enumerates the BucketService contract cases. Each

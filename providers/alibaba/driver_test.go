@@ -45,10 +45,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	alibabadrv "github.com/maqian/oss-client/providers/alibaba"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	alibabadrv "github.com/slowfei/oss-client/providers/alibaba"
 )
 
 // TestRunSuite is the M3 PR-gate entry point. It runs the conformance suite

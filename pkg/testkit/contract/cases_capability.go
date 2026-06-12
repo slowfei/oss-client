@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // runCapabilityCases iterates the frozen 13 capabilities and asserts:

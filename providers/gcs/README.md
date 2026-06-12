@@ -1,11 +1,11 @@
 # providers/gcs
 
-`github.com/maqian/oss-client/providers/gcs` — native driver for
+`github.com/slowfei/oss-client/providers/gcs` — native driver for
 **Google Cloud Storage (GCS)** via [`cloud.google.com/go/storage`](https://godoc.org/cloud.google.com/go/storage).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/oss-client/providers/gcs` |
+| Module path | `github.com/slowfei/oss-client/providers/gcs` |
 | Tag | `providers/gcs/v0.1.1` |
 | Vendor SDK | `cloud.google.com/go/storage v1.62.1` |
 | Provider id | `"gcs"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/oss-client/providers/gcs@providers/gcs/v0.1.1
+go get github.com/slowfei/oss-client/providers/gcs@providers/gcs/v0.1.1
 ```
 
 ## Quickstart
@@ -29,10 +29,10 @@ import (
     "os"
     "strings"
 
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/credential"
-    gcsdrv "github.com/maqian/oss-client/providers/gcs"
-    _ "github.com/maqian/oss-client/providers/gcs" // registers Factory
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/credential"
+    gcsdrv "github.com/slowfei/oss-client/providers/gcs"
+    _ "github.com/slowfei/oss-client/providers/gcs" // registers Factory
 )
 
 func main() {

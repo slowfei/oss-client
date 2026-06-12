@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // MinPartSize is the smallest non-final part size the helper accepts.

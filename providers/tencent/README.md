@@ -1,11 +1,11 @@
 # providers/tencent
 
-`github.com/maqian/oss-client/providers/tencent` — native driver for
+`github.com/slowfei/oss-client/providers/tencent` — native driver for
 **Tencent Cloud Object Storage (COS)** via [`github.com/tencentyun/cos-go-sdk-v5`](https://godoc.org/github.com/tencentyun/cos-go-sdk-v5).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/oss-client/providers/tencent` |
+| Module path | `github.com/slowfei/oss-client/providers/tencent` |
 | Tag | `providers/tencent/v0.1.1` |
 | Vendor SDK | `github.com/tencentyun/cos-go-sdk-v5 v0.7.73` |
 | Provider id | `"tencent"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/oss-client/providers/tencent@providers/tencent/v0.1.1
+go get github.com/slowfei/oss-client/providers/tencent@providers/tencent/v0.1.1
 ```
 
 ## Quickstart
@@ -28,10 +28,10 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/credential"
-    tencentdrv "github.com/maqian/oss-client/providers/tencent"
-    _ "github.com/maqian/oss-client/providers/tencent" // registers Factory
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/credential"
+    tencentdrv "github.com/slowfei/oss-client/providers/tencent"
+    _ "github.com/slowfei/oss-client/providers/tencent" // registers Factory
 )
 
 func main() {

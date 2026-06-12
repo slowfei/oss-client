@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // fakeClient implements uos.Client with recording stubs for Objects and

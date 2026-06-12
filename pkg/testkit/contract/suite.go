@@ -23,7 +23,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // FactoryUnderTest is the per-driver wiring the contract suite consumes.

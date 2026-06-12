@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // fakeFactory is a Factory used only by registry tests. It records

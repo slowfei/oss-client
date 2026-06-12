@@ -1,11 +1,11 @@
-module github.com/maqian/oss-client/providers/gcs
+module github.com/slowfei/oss-client/providers/gcs
 
 go 1.25.0
 
 require (
 	cloud.google.com/go/storage v1.62.1
-	github.com/maqian/oss-client v0.2.1
-	github.com/maqian/oss-client/pkg/testkit/contract v0.2.1
+	github.com/slowfei/oss-client v0.2.1
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.1
 	google.golang.org/api v0.274.0
 )
 

@@ -45,10 +45,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	tencentdrv "github.com/maqian/oss-client/providers/tencent"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	tencentdrv "github.com/slowfei/oss-client/providers/tencent"
 )
 
 // TestRunSuite is the M3 PR-gate entry point. It runs the conformance suite

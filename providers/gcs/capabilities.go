@@ -78,7 +78,7 @@
 // int64 and stamps it via ObjectHandle.Generation(gen).
 package gcs
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the GCS
 // driver. Cell values mirror docs/provider_matrix.md (the "gcs"

@@ -1,12 +1,12 @@
-module github.com/maqian/oss-client/benchmarks
+module github.com/slowfei/oss-client/benchmarks
 
 go 1.25.0
 
 require (
-	github.com/maqian/oss-client v0.2.1
-	github.com/maqian/oss-client/pkg/testkit/contract v0.2.1
-	github.com/maqian/oss-client/providers/aws v0.2.1
-	github.com/maqian/oss-client/providers/minio v0.2.1
+	github.com/slowfei/oss-client v0.2.1
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.1
+	github.com/slowfei/oss-client/providers/aws v0.2.1
+	github.com/slowfei/oss-client/providers/minio v0.2.1
 )
 
 require (
@@ -95,8 +95,8 @@ require (
 // both inside the workspace (go.work takes precedence) and outside it
 // (go.mod replaces take effect for standalone go build/test).
 replace (
-	github.com/maqian/oss-client v0.2.0 => ../
-	github.com/maqian/oss-client/pkg/testkit/contract v0.1.0 => ../pkg/testkit/contract
-	github.com/maqian/oss-client/providers/aws v0.1.0 => ../providers/aws
-	github.com/maqian/oss-client/providers/minio v0.1.1 => ../providers/minio
+	github.com/slowfei/oss-client v0.2.0 => ../
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.1.0 => ../pkg/testkit/contract
+	github.com/slowfei/oss-client/providers/aws v0.1.0 => ../providers/aws
+	github.com/slowfei/oss-client/providers/minio v0.1.1 => ../providers/minio
 )

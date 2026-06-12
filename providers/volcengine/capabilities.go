@@ -14,7 +14,7 @@
 // docs/provider_roadmap.md §M3 and architecture_plan §3.3.
 package volcengine
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Volcengine
 // TOS driver. Cell values mirror docs/provider_matrix.md (the "volcengine"

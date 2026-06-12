@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // Code is the v1-frozen error code enum. See architecture_plan §7.1 for

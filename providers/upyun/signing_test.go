@@ -12,9 +12,9 @@ import (
 
 	upyunsdk "github.com/upyun/go-sdk/v3/upyun"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/capability"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 )
 
 // signing_test.go provides PR-gate signing-shape coverage for the upyun

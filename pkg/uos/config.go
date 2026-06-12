@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	"github.com/maqian/oss-client/pkg/uos/httpx"
-	"github.com/maqian/oss-client/pkg/uos/middleware"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos/httpx"
+	"github.com/slowfei/oss-client/pkg/uos/middleware"
 )
 
 // Config is the top-level instantiation parameter passed to

@@ -6,8 +6,8 @@ import (
 
 	"github.com/tencentyun/cos-go-sdk-v5"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/s3common"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/s3common"
 )
 
 // mapError translates a cos-go-sdk-v5 error into a *uos.Error per

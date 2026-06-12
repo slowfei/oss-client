@@ -11,7 +11,7 @@ package uos
 import (
 	"context"
 
-	"github.com/maqian/oss-client/pkg/uos/capability"
+	"github.com/slowfei/oss-client/pkg/uos/capability"
 )
 
 // Client is the top-level handle to a provider. Implementations MUST

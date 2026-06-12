@@ -37,13 +37,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 
 	// Side-effect imports register provider Factories on uos.DefaultRegistry.
 	// Pull only the providers your application uses.
-	_ "github.com/maqian/oss-client/providers/aws"
-	_ "github.com/maqian/oss-client/providers/minio"
+	_ "github.com/slowfei/oss-client/providers/aws"
+	_ "github.com/slowfei/oss-client/providers/minio"
 )
 
 const (

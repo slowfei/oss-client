@@ -26,7 +26,7 @@
 // region pinning is observable at construction time.
 package huawei
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the Huawei
 // OBS driver. Cell values mirror docs/provider_matrix.md (the "huawei"

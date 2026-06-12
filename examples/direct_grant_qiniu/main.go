@@ -27,13 +27,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
 
 	// Side-effect import registers the Qiniu Factory on uos.DefaultRegistry.
-	_ "github.com/maqian/oss-client/providers/qiniu"
+	_ "github.com/slowfei/oss-client/providers/qiniu"
 
-	qiniu "github.com/maqian/oss-client/providers/qiniu"
+	qiniu "github.com/slowfei/oss-client/providers/qiniu"
 )
 
 func main() {

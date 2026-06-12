@@ -9,7 +9,7 @@
 // pkg/uos") and are reachable from caller code only via Client.As(target).
 package minio
 
-import "github.com/maqian/oss-client/pkg/uos/capability"
+import "github.com/slowfei/oss-client/pkg/uos/capability"
 
 // capabilities returns the v1-frozen capability.Report for the MinIO
 // native driver. Cell values mirror docs/provider_matrix.md (the "minio"

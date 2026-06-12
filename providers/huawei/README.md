@@ -1,11 +1,11 @@
 # providers/huawei
 
-`github.com/maqian/oss-client/providers/huawei` — native driver for
+`github.com/slowfei/oss-client/providers/huawei` — native driver for
 **Huawei Cloud Object Storage Service (OBS)** via [`github.com/huaweicloud/huaweicloud-sdk-go-obs`](https://godoc.org/github.com/huaweicloud/huaweicloud-sdk-go-obs/obs).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/oss-client/providers/huawei` |
+| Module path | `github.com/slowfei/oss-client/providers/huawei` |
 | Tag | `providers/huawei/v0.1.1` |
 | Vendor SDK | `github.com/huaweicloud/huaweicloud-sdk-go-obs v3.26.3+incompatible` |
 | Provider id | `"huawei"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/oss-client/providers/huawei@providers/huawei/v0.1.1
+go get github.com/slowfei/oss-client/providers/huawei@providers/huawei/v0.1.1
 ```
 
 ## Quickstart
@@ -28,9 +28,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/credential"
-    _ "github.com/maqian/oss-client/providers/huawei" // registers Factory
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/credential"
+    _ "github.com/slowfei/oss-client/providers/huawei" // registers Factory
 )
 
 func main() {

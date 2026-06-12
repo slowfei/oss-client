@@ -1,11 +1,11 @@
 # providers/volcengine
 
-`github.com/maqian/oss-client/providers/volcengine` — native driver for
+`github.com/slowfei/oss-client/providers/volcengine` — native driver for
 **Volcengine Tinder Object Storage (TOS)** via [`github.com/volcengine/ve-tos-golang-sdk/v2/tos`](https://godoc.org/github.com/volcengine/ve-tos-golang-sdk/v2/tos).
 
 | Field | Value |
 | --- | --- |
-| Module path | `github.com/maqian/oss-client/providers/volcengine` |
+| Module path | `github.com/slowfei/oss-client/providers/volcengine` |
 | Tag | `providers/volcengine/v0.1.1` |
 | Vendor SDK | `github.com/volcengine/ve-tos-golang-sdk/v2 v2.9.4` |
 | Provider id | `"volcengine"` (the `uos.Config.Provider` value) |
@@ -15,7 +15,7 @@
 ## Install
 
 ```bash
-go get github.com/maqian/oss-client/providers/volcengine@providers/volcengine/v0.1.1
+go get github.com/slowfei/oss-client/providers/volcengine@providers/volcengine/v0.1.1
 ```
 
 ## Quickstart
@@ -28,9 +28,9 @@ import (
     "log"
     "strings"
 
-    "github.com/maqian/oss-client/pkg/uos"
-    "github.com/maqian/oss-client/pkg/uos/credential"
-    _ "github.com/maqian/oss-client/providers/volcengine" // registers Factory
+    "github.com/slowfei/oss-client/pkg/uos"
+    "github.com/slowfei/oss-client/pkg/uos/credential"
+    _ "github.com/slowfei/oss-client/providers/volcengine" // registers Factory
 )
 
 func main() {

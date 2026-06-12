@@ -35,10 +35,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maqian/oss-client/pkg/testkit/contract"
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	azuredrv "github.com/maqian/oss-client/providers/azure"
+	"github.com/slowfei/oss-client/pkg/testkit/contract"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	azuredrv "github.com/slowfei/oss-client/providers/azure"
 )
 
 // TestRunSuite runs the conformance suite against Azurite. When the

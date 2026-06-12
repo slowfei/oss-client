@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maqian/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos"
 )
 
 // runObjectCases enumerates the ObjectService contract cases. Each

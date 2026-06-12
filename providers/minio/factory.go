@@ -10,9 +10,9 @@ import (
 	miniogo "github.com/minio/minio-go/v7"
 	miniocreds "github.com/minio/minio-go/v7/pkg/credentials"
 
-	"github.com/maqian/oss-client/pkg/uos"
-	"github.com/maqian/oss-client/pkg/uos/credential"
-	"github.com/maqian/oss-client/pkg/uos/httpx"
+	"github.com/slowfei/oss-client/pkg/uos"
+	"github.com/slowfei/oss-client/pkg/uos/credential"
+	"github.com/slowfei/oss-client/pkg/uos/httpx"
 )
 
 // providerID is the canonical Provider id this driver registers under.
