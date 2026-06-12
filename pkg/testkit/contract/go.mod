@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/fsouza/fake-gcs-server v1.54.0
-	github.com/slowfei/oss-client v0.2.1
+	github.com/slowfei/oss-client v0.2.2
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/azure v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
