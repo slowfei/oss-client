@@ -275,7 +275,7 @@ func (o objectService) Put(ctx context.Context, req uos.PutObjectRequest) (*uos.
 }
 
 // Get 通过 OSS GetObject 流式读取对象体。Range 请求使用标准 HTTP Range 头
-//（格式 "bytes=start-end"）。返回的 ObjectReader.Body 是原始 io.ReadCloser；
+// （格式 "bytes=start-end"）。返回的 ObjectReader.Body 是原始 io.ReadCloser；
 // 调用方必须 Close。
 func (o objectService) Get(ctx context.Context, req uos.GetObjectRequest) (*uos.ObjectReader, error) {
 	const op = "GetObject"
@@ -523,7 +523,7 @@ func (o objectService) List(ctx context.Context, req uos.ListObjectsRequest) (*u
 // ----------------------------------------------------------------------
 
 // multipartService 实现 uos.MultipartService，底层使用 OSS 原生分片原语
-//（InitiateMultipartUpload / UploadPart / CompleteMultipartUpload /
+// （InitiateMultipartUpload / UploadPart / CompleteMultipartUpload /
 // AbortMultipartUpload / ListMultipartUploads）。
 // 分片服务在 v0.1 中采用 bypass-vendor-native 模式 —— pkg/uos/transfer.Manager
 // 在此处被 BYPASS；提升工作于 v0.2 按 ADR Follow-up #1 进行。
@@ -636,9 +636,9 @@ func (m multipartService) Complete(ctx context.Context, req uos.CompleteMultipar
 	}
 
 	v2req := &oss.CompleteMultipartUploadRequest{
-		Bucket:              oss.Ptr(bucket),
-		Key:                 oss.Ptr(req.Key),
-		UploadId:            oss.Ptr(req.UploadID),
+		Bucket:   oss.Ptr(bucket),
+		Key:      oss.Ptr(req.Key),
+		UploadId: oss.Ptr(req.UploadID),
 		CompleteMultipartUpload: &oss.CompleteMultipartUpload{
 			Parts: parts,
 		},
@@ -655,7 +655,7 @@ func (m multipartService) Complete(ctx context.Context, req uos.CompleteMultipar
 }
 
 // Abort 取消一个正在进行的分片上传。OSS 使 Abort 在 wire 层幂等
-//（NoSuchUpload 在某些 region 返回 204，其他返回 ServiceError）；
+// （NoSuchUpload 在某些 region 返回 204，其他返回 ServiceError）；
 // 错误映射器在适用时将两者翻译为 ErrNotFound。
 func (m multipartService) Abort(ctx context.Context, req uos.AbortMultipartRequest) error {
 	const op = "AbortMultipartUpload"
@@ -803,13 +803,7 @@ func (s signerService) SignURL(ctx context.Context, req uos.SignURLRequest) (*uo
 	// 构造 Presign 选项：设置过期时间 + 附加请求头/查询参数
 	var presignOpts []func(*oss.PresignOptions)
 	presignOpts = append(presignOpts, oss.PresignExpires(req.ExpiresIn))
-
-	// 对于 V4 签名，添加额外的请求头参与签名
-	if len(req.Headers) > 0 || len(req.Query) > 0 {
-		// v2 Presign 当前通过 RequestCommon.Headers/Parameters 传递附加参数，
-		// 但 Presign API 在 marshalInput 阶段会通过结构体 tag 自动处理。
-		// 自定义 headers/query params 需要走 Client Options 回调。
-	}
+	applyPresignCommon(presignReq, req.Headers, req.Query)
 
 	result, err := s.d.client.Presign(ctx, presignReq, presignOpts...)
 	if err != nil {
@@ -849,6 +843,50 @@ func strPtrIfNonEmpty(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func applyPresignCommon(req any, headers http.Header, query map[string]string) {
+	commonHeaders := httpHeaderToMap(headers)
+	commonQuery := stringMapCopy(query)
+	if len(commonHeaders) == 0 && len(commonQuery) == 0 {
+		return
+	}
+	switch r := req.(type) {
+	case *oss.GetObjectRequest:
+		r.RequestCommon.Headers = commonHeaders
+		r.RequestCommon.Parameters = commonQuery
+	case *oss.PutObjectRequest:
+		r.RequestCommon.Headers = commonHeaders
+		r.RequestCommon.Parameters = commonQuery
+	case *oss.HeadObjectRequest:
+		r.RequestCommon.Headers = commonHeaders
+		r.RequestCommon.Parameters = commonQuery
+	}
+}
+
+func httpHeaderToMap(headers http.Header) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(headers))
+	for key, values := range headers {
+		if len(values) == 0 {
+			continue
+		}
+		out[key] = strings.Join(values, ",")
+	}
+	return out
+}
+
+func stringMapCopy(in map[string]string) map[string]string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
 }
 
 // applyContentHeaders 将 uos.ContentHeaders 映射到 *PutObjectRequest 的对应字段上。

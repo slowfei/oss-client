@@ -3,6 +3,7 @@ package alibaba
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -85,7 +86,7 @@ func TestSignURL_Read_Shape(t *testing.T) {
 }
 
 // TestSignURL_Write_Shape 验证 alibaba driver 支持 SignURL(PUT)
-//（S3-family 模式），结果 URL 仍携带 OSS 格式的 query 参数。
+// （S3-family 模式），结果 URL 仍携带 OSS 格式的 query 参数。
 func TestSignURL_Write_Shape(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -111,6 +112,43 @@ func TestSignURL_Write_Shape(t *testing.T) {
 	}
 	if u.Query().Get("Signature") == "" {
 		t.Errorf("expected Signature query param on PUT URL; got query=%q", u.RawQuery)
+	}
+}
+
+// TestSignURL_Write_BindsHeadersAndQuery verifies caller-supplied headers and
+// query params are included in the presigned request instead of being dropped.
+func TestSignURL_Write_BindsHeadersAndQuery(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	cli := newTestClient(t)
+
+	signed, err := cli.Signer("test-bucket").SignURL(ctx, uos.SignURLRequest{
+		Method:    "PUT",
+		Key:       "obj.txt",
+		ExpiresIn: 5 * time.Minute,
+		Headers: http.Header{
+			"Content-Type":        []string{"text/plain"},
+			"x-oss-meta-trace-id": []string{"trace-123"},
+		},
+		Query: map[string]string{
+			"x-oss-forbid-overwrite": "true",
+		},
+	})
+	if err != nil {
+		t.Fatalf("SignURL(PUT): %v", err)
+	}
+	u, err := url.Parse(signed.URL)
+	if err != nil {
+		t.Fatalf("url.Parse: %v", err)
+	}
+	if got := u.Query().Get("x-oss-forbid-overwrite"); got != "true" {
+		t.Errorf("query x-oss-forbid-overwrite: got %q, want true; raw=%q", got, u.RawQuery)
+	}
+	if got := signed.Headers.Get("Content-Type"); got != "text/plain" {
+		t.Errorf("signed Content-Type: got %q, want text/plain; headers=%v", got, signed.Headers)
+	}
+	if got := signed.Headers.Get("x-oss-meta-trace-id"); got != "trace-123" {
+		t.Errorf("signed x-oss-meta-trace-id: got %q, want trace-123; headers=%v", got, signed.Headers)
 	}
 }
 
