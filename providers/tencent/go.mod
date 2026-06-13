@@ -3,7 +3,7 @@ module github.com/slowfei/oss-client/providers/tencent
 go 1.24.0
 
 require (
-	github.com/slowfei/oss-client v0.2.2
+	github.com/slowfei/oss-client v0.2.3
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.73
 )
 

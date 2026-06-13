@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	cloud.google.com/go/storage v1.62.1
-	github.com/slowfei/oss-client v0.2.2
-	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.2
+	github.com/slowfei/oss-client v0.2.3
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.3
 	google.golang.org/api v0.274.0
 )
 

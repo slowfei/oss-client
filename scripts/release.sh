@@ -73,10 +73,16 @@ for p in "${PROVIDERS[@]}"; do
 done
 
 # Modules whose go.mod requires also need bumping but which are NOT
-# tagged (workspace consumers — examples + benchmarks). They must stay
+# tagged (provider contract modules, examples, and benchmarks). They must stay
 # in sync with TAGGED_DIRS so go.work workspace resolution doesn't fall
 # through to proxy lookups for stale v0.1.x references.
 UNTAGGED_DIRS=(
+  ./providers/alibaba/contract
+  ./providers/aws/contract
+  ./providers/huawei/contract
+  ./providers/minio/contract
+  ./providers/qiniu/contract
+  ./providers/tencent/contract
   ./examples/quickstart
   ./examples/multipart
   ./examples/direct_grant_qiniu
@@ -95,14 +101,14 @@ GOMOD_DIRS=("${TAGGED_DIRS[@]}" "${UNTAGGED_DIRS[@]}")
 echo "==> bumping go.mod require lines to $VERSION across ${#GOMOD_DIRS[@]} modules"
 for d in "${GOMOD_DIRS[@]}"; do
   if [[ ! -f "$d/go.mod" ]]; then continue; fi
-  if grep -q "^	github.com/slowfei/oss-client v" "$d/go.mod"; then
+  if grep -Eq "^[[:space:]]*github.com/slowfei/oss-client v" "$d/go.mod"; then
     (cd "$d" && go mod edit -require="github.com/slowfei/oss-client@$VERSION")
   fi
-  if grep -q "^	github.com/slowfei/oss-client/pkg/testkit/contract v" "$d/go.mod"; then
+  if grep -Eq "^[[:space:]]*github.com/slowfei/oss-client/pkg/testkit/contract v" "$d/go.mod"; then
     (cd "$d" && go mod edit -require="github.com/slowfei/oss-client/pkg/testkit/contract@$VERSION")
   fi
   for p in "${PROVIDERS[@]}"; do
-    if grep -q "^	github.com/slowfei/oss-client/providers/$p v" "$d/go.mod"; then
+    if grep -Eq "^[[:space:]]*github.com/slowfei/oss-client/providers/$p v" "$d/go.mod"; then
       (cd "$d" && go mod edit -require="github.com/slowfei/oss-client/providers/$p@$VERSION")
     fi
   done

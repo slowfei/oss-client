@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.5.1
-	github.com/slowfei/oss-client v0.2.2
+	github.com/slowfei/oss-client v0.2.3
 )
 
 require (

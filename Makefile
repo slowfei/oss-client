@@ -1,17 +1,23 @@
 .PHONY: test test-no-docker vet fmt tidy add-provider release release-notes
 
-# Modules walked by tidy / multi-module-aware targets. Mirror the set
-# tagged by scripts/release.sh (12 modules: root + testkit + 10 providers).
+# Modules walked by tidy / multi-module-aware targets. Includes tagged
+# modules plus release-bumped helper modules such as provider contract tests.
 MODULES = . \
 	./pkg/testkit/contract \
 	./providers/alibaba \
+	./providers/alibaba/contract \
 	./providers/aws \
+	./providers/aws/contract \
 	./providers/azure \
 	./providers/gcs \
 	./providers/huawei \
+	./providers/huawei/contract \
 	./providers/minio \
+	./providers/minio/contract \
 	./providers/qiniu \
+	./providers/qiniu/contract \
 	./providers/tencent \
+	./providers/tencent/contract \
 	./providers/upyun \
 	./providers/volcengine
 
@@ -31,7 +37,8 @@ fmt:
 	gofmt -w .
 
 # tidy runs `go mod tidy` in every module so go.mod / go.sum stay in sync
-# across the workspace (root + testkit + providers/<name>). Mirrors the
+# across the workspace (root + testkit + providers/<name> + contract modules).
+# Mirrors the
 # multi-module setup documented in RELEASING.md §1.
 tidy:
 	@for m in $(MODULES); do \

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/minio/minio-go/v7 v7.0.97
-	github.com/slowfei/oss-client v0.2.2
+	github.com/slowfei/oss-client v0.2.3
 )
 
 require (

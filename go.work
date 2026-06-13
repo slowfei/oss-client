@@ -35,16 +35,16 @@ use (
 // not seen by downstream `go get` consumers (go.work is git-tracked but
 // honored only inside this repo).
 replace (
-	github.com/slowfei/oss-client v0.2.2 => ./
-	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.2 => ./pkg/testkit/contract
-	github.com/slowfei/oss-client/providers/alibaba v0.2.2 => ./providers/alibaba
-	github.com/slowfei/oss-client/providers/aws v0.2.2 => ./providers/aws
-	github.com/slowfei/oss-client/providers/azure v0.2.2 => ./providers/azure
-	github.com/slowfei/oss-client/providers/gcs v0.2.2 => ./providers/gcs
-	github.com/slowfei/oss-client/providers/huawei v0.2.2 => ./providers/huawei
-	github.com/slowfei/oss-client/providers/minio v0.2.2 => ./providers/minio
-	github.com/slowfei/oss-client/providers/qiniu v0.2.2 => ./providers/qiniu
-	github.com/slowfei/oss-client/providers/tencent v0.2.2 => ./providers/tencent
-	github.com/slowfei/oss-client/providers/upyun v0.2.2 => ./providers/upyun
-	github.com/slowfei/oss-client/providers/volcengine v0.2.2 => ./providers/volcengine
+	github.com/slowfei/oss-client v0.2.3 => ./
+	github.com/slowfei/oss-client/pkg/testkit/contract v0.2.3 => ./pkg/testkit/contract
+	github.com/slowfei/oss-client/providers/alibaba v0.2.3 => ./providers/alibaba
+	github.com/slowfei/oss-client/providers/aws v0.2.3 => ./providers/aws
+	github.com/slowfei/oss-client/providers/azure v0.2.3 => ./providers/azure
+	github.com/slowfei/oss-client/providers/gcs v0.2.3 => ./providers/gcs
+	github.com/slowfei/oss-client/providers/huawei v0.2.3 => ./providers/huawei
+	github.com/slowfei/oss-client/providers/minio v0.2.3 => ./providers/minio
+	github.com/slowfei/oss-client/providers/qiniu v0.2.3 => ./providers/qiniu
+	github.com/slowfei/oss-client/providers/tencent v0.2.3 => ./providers/tencent
+	github.com/slowfei/oss-client/providers/upyun v0.2.3 => ./providers/upyun
+	github.com/slowfei/oss-client/providers/volcengine v0.2.3 => ./providers/volcengine
 )
