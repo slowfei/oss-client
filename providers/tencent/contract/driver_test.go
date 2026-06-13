@@ -36,7 +36,7 @@
 //     even if the wire-level auth fails).
 //   - The skip-with-reason path through the contract suite is exercised, so
 //     the lead can update the matrix from this run's output.
-package tencent_test
+package contract_test
 
 import (
 	"context"

@@ -65,6 +65,13 @@ func Factory() uos.Factory { return &factoryImpl{} }
 // factoryImpl is the concrete uos.Factory for AWS S3.
 type factoryImpl struct{}
 
+// init registers this driver with the process-global Registry. Tests and
+// callers that don't want the global side effect should construct an
+// isolated Registry via uos.NewRegistry and Register Factory() manually.
+func init() {
+	_ = uos.DefaultRegistry().Register(&factoryImpl{})
+}
+
 // Provider returns the canonical provider id ("aws").
 func (factoryImpl) Provider() uos.Provider { return providerID }
 

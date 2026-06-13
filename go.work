@@ -9,13 +9,19 @@ use (
 	./examples/streaming_write
 	./pkg/testkit/contract
 	./providers/alibaba
+	./providers/alibaba/contract
 	./providers/aws
+	./providers/aws/contract
 	./providers/azure
 	./providers/gcs
 	./providers/huawei
+	./providers/huawei/contract
 	./providers/minio
+	./providers/minio/contract
 	./providers/qiniu
+	./providers/qiniu/contract
 	./providers/tencent
+	./providers/tencent/contract
 	./providers/upyun
 	./providers/volcengine
 )

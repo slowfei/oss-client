@@ -11,7 +11,7 @@
 // Real-AWS-only cases (e.g. UploadPart against a 5 MiB minimum part-size that
 // MinIO sometimes accepts but AWS rejects) live behind the cloud nightly
 // workflow; this PR-gate file SkipCases them with reason.
-package aws_test
+package contract_test
 
 import (
 	"context"

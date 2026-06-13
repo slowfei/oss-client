@@ -1,6 +1,6 @@
 //go:build docker
 
-package minio_test
+package contract_test
 
 import (
 	"context"

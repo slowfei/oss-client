@@ -34,7 +34,7 @@
 //     directives are wired correctly even though MinIO can't speak Kodo auth).
 //   - The driver Open() + Capabilities() + Close() lifecycle compiles and
 //     the factory wiring is correct.
-package qiniu_test
+package contract_test
 
 import (
 	"context"

@@ -765,7 +765,7 @@ func translateObjectInfo(bucket, key string, in miniogo.ObjectInfo) uos.ObjectIn
 		VersionID:    in.VersionID,
 		Content: uos.ContentHeaders{
 			ContentType:     in.ContentType,
-			ContentEncoding: in.ContentEncoding,
+			ContentEncoding: in.Metadata.Get("Content-Encoding"),
 			Expires:         in.Expires,
 		},
 		Metadata: extractUserMetadata(in.Metadata, in.UserMetadata),
